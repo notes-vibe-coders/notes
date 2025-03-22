@@ -8,15 +8,17 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class UserEntity {
-    @Id
-    @GeneratedValue(generator = "increment")
-    private int id;
-    @Column(unique = true)
-    private String username;
-    private String password;
+  @Id
+  @GeneratedValue(generator = "increment")
+  private int id;
 
-    public UserEntity(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
+  @Column(unique = true)
+  private String username;
+
+  private String password;
+
+  public UserEntity(String username, String password) {
+    this.username = username;
+    this.password = password;
+  }
 }
