@@ -2,21 +2,20 @@ package pl.edu.uj.notes.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
   private final UserRepository userRepository;
 
-  public int create(CreateUserRequest request) {
+  public int createUser(CreateUserRequest request) {
     UserEntity user = new UserEntity(request.getUsername(), request.getPassword());
 
-    userRepository
-        .findByUsername(request.getUsername())
-        .ifPresent(
-            u -> {
-              throw new IllegalArgumentException("User with this username already exists");
-            });
+    if (userRepository.existsByUsername(request.getUsername())) {
+      String message = String.format("User '%s' already exists", request.getUsername());
+      throw new UserAlreadyExistsException(message);
+    }
 
     userRepository.save(user);
     return user.getId();
