@@ -26,7 +26,7 @@ public class UserServiceTest {
 
   private static final String USERNAME = "username";
   private static final String PASSWORD = "password";
-  private static final String ENCODED = "encoded";
+  private static final String ENCODED_PASSWORD = "encoded";
 
   @Autowired private UserRepository userRepository;
   @Autowired private UserService userService;
@@ -68,12 +68,12 @@ public class UserServiceTest {
     void createsUserWithEncodedPassword() {
       var request = new CreateUserRequest(USERNAME, PASSWORD);
 
-      when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED);
+      when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
 
       userService.createUser(request);
       UserEntity user = userRepository.getUserEntityByUsername(USERNAME).orElseThrow();
 
-      assertEquals(ENCODED, user.getPassword());
+      assertEquals(ENCODED_PASSWORD, user.getPassword());
     }
   }
 }
