@@ -18,6 +18,7 @@ class UserController {
     URI location = URI.create("/api/v1/user/" + id);
     return ResponseEntity.created(location).build();
   }
+
   @DeleteMapping("/{id}")
   ResponseEntity<Void> deleteUser(@PathVariable int id) {
     userService.deleteUser(id);
