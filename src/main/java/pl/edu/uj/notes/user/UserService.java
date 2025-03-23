@@ -1,5 +1,7 @@
 package pl.edu.uj.notes.user;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,9 +12,6 @@ import pl.edu.uj.notes.user.exception.UnauthorizedUserAccessException;
 import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exception.UserNotFoundException;
 import pl.edu.uj.notes.user.exception.UsersNotFoundException;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

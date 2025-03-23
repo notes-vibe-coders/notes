@@ -3,7 +3,6 @@ package pl.edu.uj.notes.user;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
