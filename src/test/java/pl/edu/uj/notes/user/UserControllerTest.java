@@ -1,5 +1,6 @@
 package pl.edu.uj.notes.user;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,4 +35,17 @@ class UserControllerTest {
                 .content("{\"username\":\"username\",\"password\":\"password\"}"))
         .andExpect(status().isCreated());
   }
+
+  @Test
+  void whenValidUpdateRequest_thenNoContent() throws Exception {
+    int userId = 1;
+    String payload = "{\"username\":\"newUser\",\"password\":\"newPassword\"}";
+
+    mockMvc.perform(
+                    put(USER_URI + "/" + userId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(payload))
+            .andExpect(status().isNoContent());
+  }
+
 }
