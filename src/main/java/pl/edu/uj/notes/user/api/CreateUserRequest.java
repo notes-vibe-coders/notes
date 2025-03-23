@@ -1,4 +1,4 @@
-package pl.edu.uj.notes.user;
+package pl.edu.uj.notes.user.api;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
