@@ -27,8 +27,6 @@ public class UserService {
         userRepository
             .findById(id)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-
     userRepository.delete(user);
   }
 }
