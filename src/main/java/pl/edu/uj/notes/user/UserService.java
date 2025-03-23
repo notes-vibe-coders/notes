@@ -23,10 +23,12 @@ public class UserService {
   }
 
   public void deleteUser(int id) {
-    UserEntity user = userRepository.findById(id)
+    UserEntity user =
+        userRepository
+            .findById(id)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
 
     userRepository.delete(user);
   }
-
 }
