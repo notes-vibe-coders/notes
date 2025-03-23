@@ -1,5 +1,6 @@
 package pl.edu.uj.notes.user;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -19,19 +20,33 @@ class UserControllerTest {
   @Autowired MockMvc mockMvc;
 
   @Test
-  void whenBlankFields_thenBadRequest() throws Exception {
+  void shouldReturnBadRequestWhenCreateUserDataIsBlank() throws Exception {
     mockMvc
         .perform(post(USER_URI).contentType(MediaType.APPLICATION_JSON).content("{}"))
         .andExpect(status().isBadRequest());
   }
 
   @Test
-  void whenCorrectRequest_thenCreated() throws Exception {
+  void shouldReturnBadRequestWhenViewUsersDataIsEmpty() throws Exception {
+    mockMvc
+        .perform(get(USER_URI).contentType(MediaType.APPLICATION_JSON).content("{\"idList\": []}"))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void shouldCreateUserWhenCreateUserRequestIsValid() throws Exception {
     mockMvc
         .perform(
             post(USER_URI)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"username\",\"password\":\"password\"}"))
         .andExpect(status().isCreated());
+  }
+
+  @Test
+  void shouldReturnOkStatusWhenViewUsersRequestIsValid() throws Exception {
+    mockMvc
+        .perform(get(USER_URI).contentType(MediaType.APPLICATION_JSON).content("{\"idList\": [1]}"))
+        .andExpect(status().isOk());
   }
 }

@@ -1,8 +1,13 @@
 package pl.edu.uj.notes.user;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import pl.edu.uj.notes.user.api.CreateUserRequest;
+import pl.edu.uj.notes.user.api.ViewUsersRequest;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exceptions.UsersNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -19,5 +24,18 @@ public class UserService {
 
     userRepository.save(user);
     return user.getId();
+  }
+
+  public List<String> viewUsers(ViewUsersRequest request) {
+    List<UserEntity> users = userRepository.findAllById(request.getIdList());
+    if (users.isEmpty()) {
+      String message = String.format("Users '%s' not found", request.getIdList());
+      throw new UsersNotFoundException(message);
+    }
+    return getUsernames(users);
+  }
+
+  private static List<String> getUsernames(List<UserEntity> users) {
+    return users.stream().map(UserEntity::getUsername).collect(Collectors.toList());
   }
 }
