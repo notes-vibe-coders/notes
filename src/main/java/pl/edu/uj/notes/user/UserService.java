@@ -1,6 +1,9 @@
 package pl.edu.uj.notes.user;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 
@@ -8,9 +11,11 @@ import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 @RequiredArgsConstructor
 public class UserService {
   private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
 
   public int createUser(CreateUserRequest request) {
-    UserEntity user = new UserEntity(request.getUsername(), request.getPassword());
+    UserEntity user =
+        new UserEntity(request.getUsername(), passwordEncoder.encode(request.getPassword()));
 
     if (userRepository.existsByUsername(request.getUsername())) {
       String message = String.format("User '%s' already exists", request.getUsername());
@@ -21,11 +26,19 @@ public class UserService {
     return user.getId();
   }
 
+  public Optional<UserEntity> getUserByUsername(String username) {
+    if (StringUtils.isBlank(username)) {
+      throw new IllegalArgumentException("Username should not be null or empty");
+    }
+
+    return userRepository.getUserEntityByUsername(username);
+  }
+
   public void updateUser(int id, UpdateUserRequest request) {
     UserEntity user =
-        userRepository
-            .findById(id)
-            .orElseThrow(() -> new UserAlreadyExistsException("User with this id does not exist"));
+            userRepository
+                    .findById(id)
+                    .orElseThrow(() -> new UserAlreadyExistsException("User with this id does not exist"));
 
     if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
       boolean usernameExists = userRepository.existsByUsername(request.getUsername());
