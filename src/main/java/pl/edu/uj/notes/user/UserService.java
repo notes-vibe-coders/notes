@@ -22,7 +22,9 @@ public class UserService {
   }
 
   public void updateUser(int id, UpdateUserRequest request) {
-    UserEntity user = userRepository.findById(id)
+    UserEntity user =
+        userRepository
+            .findById(id)
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
     if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
@@ -39,5 +41,4 @@ public class UserService {
 
     userRepository.save(user);
   }
-
 }

@@ -1,7 +1,7 @@
 package pl.edu.uj.notes.user;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -41,11 +41,9 @@ class UserControllerTest {
     int userId = 1;
     String payload = "{\"username\":\"newUser\",\"password\":\"newPassword\"}";
 
-    mockMvc.perform(
-                    put(USER_URI + "/" + userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(payload))
-            .andExpect(status().isNoContent());
+    mockMvc
+        .perform(
+            put(USER_URI + "/" + userId).contentType(MediaType.APPLICATION_JSON).content(payload))
+        .andExpect(status().isNoContent());
   }
-
 }

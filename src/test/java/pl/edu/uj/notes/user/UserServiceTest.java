@@ -3,6 +3,7 @@ package pl.edu.uj.notes.user;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,8 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
-
-import java.util.Optional;
 
 public class UserServiceTest {
 
@@ -64,22 +63,21 @@ public class UserServiceTest {
 
   @Test
   void whenUpdateUserWithNewUsername_thenUsernameIsUpdated() {
-    //given
+    // given
     int userId = 1;
     UpdateUserRequest request = new UpdateUserRequest("newUsername", "newPassword");
     UserEntity user = new UserEntity("oldUsername", "oldPassword");
     user.setId(userId);
 
-    //when
+    // when
     when(userRepository.findById(userId)).thenReturn(Optional.of(user));
     when(userRepository.existsByUsername("newUsername")).thenReturn(false);
 
     userService.updateUser(userId, request);
 
-    //then
+    // then
     assertEquals("newUsername", user.getUsername());
     assertEquals("newPassword", user.getPassword());
     verify(userRepository).save(user);
   }
-
 }

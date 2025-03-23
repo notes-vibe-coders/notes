@@ -20,7 +20,8 @@ class UserController {
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Void> updateUser(@PathVariable int id, @RequestBody UpdateUserRequest request) {
+  public ResponseEntity<Void> updateUser(
+      @PathVariable int id, @RequestBody UpdateUserRequest request) {
     userService.updateUser(id, request);
     return ResponseEntity.noContent().build();
   }
