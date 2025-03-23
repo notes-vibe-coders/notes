@@ -3,10 +3,7 @@ package pl.edu.uj.notes.user;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -20,4 +17,11 @@ public class UserController {
     URI location = URI.create("/api/v1/user/" + id);
     return ResponseEntity.created(location).build();
   }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteUser(@PathVariable int id) {
+    userService.deleteUser(id);
+    return ResponseEntity.noContent().build();
+  }
+
 }
