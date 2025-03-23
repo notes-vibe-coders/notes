@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class UserService {
     UserEntity user =
         userRepository
             .findById(id)
-            .orElseThrow(() -> new UserAlreadyExistsException("User with this id does not exist"));
+            .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
 
     if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
       boolean usernameExists = userRepository.existsByUsername(request.getUsername());
