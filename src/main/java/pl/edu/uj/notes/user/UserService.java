@@ -36,9 +36,9 @@ public class UserService {
 
   public void updateUser(int id, UpdateUserRequest request) {
     UserEntity user =
-            userRepository
-                    .findById(id)
-                    .orElseThrow(() -> new UserAlreadyExistsException("User with this id does not exist"));
+        userRepository
+            .findById(id)
+            .orElseThrow(() -> new UserAlreadyExistsException("User with this id does not exist"));
 
     if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
       boolean usernameExists = userRepository.existsByUsername(request.getUsername());

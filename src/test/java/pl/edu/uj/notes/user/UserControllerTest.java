@@ -43,20 +43,18 @@ class UserControllerTest {
   }
 
   @Test
-<<<<<<< HEAD
   void whenValidUpdateRequest_thenNoContent() throws Exception {
     int userId = 1;
     String payload = "{\"username\":\"newUser\",\"password\":\"newPassword\"}";
 
     mockMvc
-        .perform(
-            put(USER_URI + "/" + userId).contentType(MediaType.APPLICATION_JSON).content(payload))
-        .andExpect(status().isNoContent());
-=======
+            .perform(
+                    put(USER_URI + "/" + userId).contentType(MediaType.APPLICATION_JSON).content(payload))
+            .andExpect(status().isNoContent());
+  }
   void notAuthenticated_401() throws Exception {
     mockMvc
         .perform(post(USER_URI).contentType(MediaType.APPLICATION_JSON).content("{}"))
         .andExpect(status().isUnauthorized());
->>>>>>> origin/master
   }
 }
