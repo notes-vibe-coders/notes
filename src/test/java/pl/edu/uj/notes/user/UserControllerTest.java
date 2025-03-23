@@ -43,19 +43,19 @@ class UserControllerTest {
         .andExpect(status().isCreated());
   }
 
-  @WithMockUser(username = "admin", roles = {"USER"})
+  @WithMockUser(
+      username = "admin",
+      roles = {"USER"})
   @Test
   void whenValidUpdateRequest_thenReturnsOkWithMessage() throws Exception {
     int userId = 1;
     String payload = "{\"username\":\"newUser\",\"password\":\"newPassword\"}";
 
     mockMvc
-            .perform(
-                    put(USER_URI + "/" + userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(payload))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.message").value("User updated successfully"));
+        .perform(
+            put(USER_URI + "/" + userId).contentType(MediaType.APPLICATION_JSON).content(payload))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("User updated successfully"));
   }
 
   void notAuthenticated_401() throws Exception {
