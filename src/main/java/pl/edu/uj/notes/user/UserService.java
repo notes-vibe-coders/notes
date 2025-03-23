@@ -25,12 +25,12 @@ public class UserService {
     UserEntity user =
         userRepository
             .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            .orElseThrow(() -> new UserAlreadyExistsException("User with this id does not exist"));
 
     if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
       boolean usernameExists = userRepository.existsByUsername(request.getUsername());
       if (usernameExists) {
-        throw new IllegalArgumentException("Username already taken");
+        throw new UserAlreadyExistsException("User with this username already exists");
       }
       user.setUsername(request.getUsername());
     }

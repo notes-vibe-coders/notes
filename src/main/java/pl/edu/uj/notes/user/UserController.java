@@ -2,6 +2,8 @@ package pl.edu.uj.notes.user;
 
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,9 +22,13 @@ class UserController {
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Void> updateUser(
+  public ResponseEntity<Map<String, String>> updateUser(
       @PathVariable int id, @RequestBody UpdateUserRequest request) {
     userService.updateUser(id, request);
-    return ResponseEntity.noContent().build();
+
+    Map<String, String> response = new HashMap<>();
+    response.put("message", "User updated successfully");
+
+    return ResponseEntity.ok(response);
   }
 }
