@@ -1,14 +1,13 @@
 package pl.edu.uj.notes.user;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.edu.uj.notes.user.api.CreateUserRequest;
 import pl.edu.uj.notes.user.api.ViewUsersRequest;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exceptions.UsersNotFoundException;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

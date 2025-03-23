@@ -29,8 +29,8 @@ class UserControllerTest {
   @Test
   void shouldReturnBadRequestWhenViewUsersDataIsEmpty() throws Exception {
     mockMvc
-            .perform(get(USER_URI).contentType(MediaType.APPLICATION_JSON).content("{\"idList\": []}"))
-            .andExpect(status().isBadRequest());
+        .perform(get(USER_URI).contentType(MediaType.APPLICATION_JSON).content("{\"idList\": []}"))
+        .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -46,10 +46,7 @@ class UserControllerTest {
   @Test
   void shouldReturnOkStatusWhenViewUsersRequestIsValid() throws Exception {
     mockMvc
-            .perform(
-                    get(USER_URI)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"idList\": [1]}"))
-            .andExpect(status().isOk());
+        .perform(get(USER_URI).contentType(MediaType.APPLICATION_JSON).content("{\"idList\": [1]}"))
+        .andExpect(status().isOk());
   }
 }

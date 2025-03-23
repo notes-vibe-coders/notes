@@ -3,6 +3,7 @@ package pl.edu.uj.notes.user;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,8 +14,6 @@ import pl.edu.uj.notes.user.api.CreateUserRequest;
 import pl.edu.uj.notes.user.api.ViewUsersRequest;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exceptions.UsersNotFoundException;
-
-import java.util.List;
 
 class UserServiceTest {
 
@@ -40,10 +39,8 @@ class UserServiceTest {
   @Test
   void shouldReturnUserIdWhenUserIsCreated() {
     // Given
-    CreateUserRequest createUserRequest = CreateUserRequest.builder()
-              .username(USERNAME)
-              .password(PASSWORD)
-              .build();
+    CreateUserRequest createUserRequest =
+        CreateUserRequest.builder().username(USERNAME).password(PASSWORD).build();
     UserEntity mockUser = new UserEntity(USERNAME, PASSWORD);
 
     when(userRepository.existsByUsername(USERNAME)).thenReturn(false);
@@ -60,10 +57,8 @@ class UserServiceTest {
   @Test
   void shouldThrowExceptionWhenUsernameAlreadyExists() {
     // Given
-    CreateUserRequest createUserRequest = CreateUserRequest.builder()
-            .username(USERNAME)
-            .password(PASSWORD)
-            .build();
+    CreateUserRequest createUserRequest =
+        CreateUserRequest.builder().username(USERNAME).password(PASSWORD).build();
 
     when(userRepository.existsByUsername(USERNAME)).thenReturn(true);
 
@@ -75,9 +70,7 @@ class UserServiceTest {
   @Test
   void shouldReturnUsernamesWhenTheyArePresentInDatabase() {
     // Given
-    ViewUsersRequest viewUsersRequest = ViewUsersRequest.builder()
-            .idList(List.of(ID))
-            .build();
+    ViewUsersRequest viewUsersRequest = ViewUsersRequest.builder().idList(List.of(ID)).build();
     UserEntity mockUser = new UserEntity(USERNAME, PASSWORD);
 
     when(userRepository.findAllById(List.of(ID))).thenReturn(List.of(mockUser));
@@ -93,9 +86,7 @@ class UserServiceTest {
   @Test
   void shouldThrowExceptionWhenUsernamesAreNotPresentInDatabase() {
     // Given
-    ViewUsersRequest viewUsersRequest = ViewUsersRequest.builder()
-            .idList(List.of(ID))
-            .build();
+    ViewUsersRequest viewUsersRequest = ViewUsersRequest.builder().idList(List.of(ID)).build();
 
     when(userRepository.findAllById(List.of(ID))).thenReturn(List.of());
 
