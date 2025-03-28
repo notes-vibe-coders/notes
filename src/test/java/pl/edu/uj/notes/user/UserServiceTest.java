@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,5 +75,25 @@ public class UserServiceTest {
           .extracting(UserEntity::getUsername, UserEntity::getPassword)
           .containsExactly(USERNAME, ENCODED_PASSWORD);
     }
+  }
+
+  @Test
+  void whenUpdateUserWithNewUsername_thenUsernameIsUpdated() {
+    // given
+    int userId = 1;
+    UpdateUserRequest request = new UpdateUserRequest("newUsername", "newPassword");
+    UserEntity user = new UserEntity("oldUsername", "oldPassword");
+    user.setId(userId);
+
+    // when
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userRepository.existsByUsername("newUsername")).thenReturn(false);
+
+    userService.updateUser(userId, request);
+
+    // then
+    assertEquals("newUsername", user.getUsername());
+    assertEquals("newPassword", user.getPassword());
+    verify(userRepository).save(user);
   }
 }
