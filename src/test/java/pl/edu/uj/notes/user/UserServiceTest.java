@@ -75,12 +75,14 @@ public class UserServiceTest {
   @Test
   void whenUserExists_thenDeleteUserSuccessfully() {
     // Given
-    int userId = 1;
     UserEntity user = new UserEntity(USERNAME, PASSWORD);
+    String userId = user.getId();
     userRepository.save(user);
 
+    DeleteUserRequest deleteUserRequest = new DeleteUserRequest(userId);
+
     // When
-    userService.deleteUser(userId);
+    userService.deleteUser(deleteUserRequest);
 
     // Then
     assertFalse(userRepository.existsById(userId));
@@ -89,11 +91,12 @@ public class UserServiceTest {
   @Test
   void whenUserDoesNotExist_thenThrowUserNotFoundException() {
     // Given
-    int userId = 1;
+    String userId = "1e931558-2ef8-42ae-8642-3e72778de9c5";
+    DeleteUserRequest deleteUserRequest = new DeleteUserRequest(userId);
 
     // When & Then
     UserNotFoundException exception =
-            assertThrows(UserNotFoundException.class, () -> userService.deleteUser(userId));
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUser(deleteUserRequest));
 
     assertEquals("User with ID " + userId + " does not exist", exception.getMessage());
     assertFalse(userRepository.existsById(userId));

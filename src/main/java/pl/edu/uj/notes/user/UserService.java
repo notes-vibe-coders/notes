@@ -27,14 +27,17 @@ public class UserService {
     return user.getId();
   }
 
-  public void deleteUser(int id) {
+  public void deleteUser(DeleteUserRequest request) {
+    String id = request.getId();
+
     UserEntity user =
         userRepository
             .findById(id)
             .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " does not exist"));
+
     userRepository.delete(user);
   }
-  
+
   public Optional<UserEntity> getUserByUsername(String username) {
     if (StringUtils.isBlank(username)) {
       throw new IllegalArgumentException("Username should not be null or empty");
