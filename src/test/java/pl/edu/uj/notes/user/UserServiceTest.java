@@ -1,64 +1,75 @@
 package pl.edu.uj.notes.user;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
 
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Import(SecurityConfig.class)
 public class UserServiceTest {
 
   private static final String USERNAME = "username";
   private static final String PASSWORD = "password";
+  private static final String ENCODED_PASSWORD = "encoded";
 
-  private AutoCloseable closeable;
-
-  @Mock private UserRepository userRepository;
-  @InjectMocks private UserService userService;
-
-  @BeforeEach
-  void setUp() {
-    closeable = MockitoAnnotations.openMocks(this);
-  }
+  @Autowired private UserRepository userRepository;
+  @Autowired private UserService userService;
+  @MockitoBean private PasswordEncoder passwordEncoder;
 
   @AfterEach
-  void close() throws Exception {
-    closeable.close();
+  void tearDown() {
+    userRepository.deleteAll();
   }
 
-  @Test
-  void whenCreateUser_thenReturnsUserId() {
-    // Given
-    CreateUserRequest createUserRequest = new CreateUserRequest(USERNAME, PASSWORD);
-    UserEntity mockUser = new UserEntity(USERNAME, PASSWORD);
+  @Nested
+  class CreateUser {
 
-    when(userRepository.existsByUsername(USERNAME)).thenReturn(false);
-    when(userRepository.save(any(UserEntity.class))).thenReturn(mockUser);
+    @Test
+    void whenCreateUser_thenReturnsUserId() {
+      // Given
+      CreateUserRequest createUserRequest = new CreateUserRequest(USERNAME, PASSWORD);
 
-    // When
-    int id = userService.createUser(createUserRequest);
+      // When
+      int id = userService.createUser(createUserRequest);
 
-    // Then
-    assertEquals(0, id);
-    verify(userRepository, times(1)).save(any(UserEntity.class));
-  }
+      // Then
+      assertTrue(userRepository.existsById(id));
+      assertTrue(userRepository.existsByUsername(createUserRequest.getUsername()));
+    }
 
-  @Test
-  void whenUsernameAlreadyExists_thenThrowException() {
-    // Given
-    CreateUserRequest createUserRequest = new CreateUserRequest(USERNAME, PASSWORD);
+    @Test
+    void whenUsernameAlreadyExists_thenThrowException() {
+      // Given
+      CreateUserRequest createUserRequest = new CreateUserRequest(USERNAME, PASSWORD);
 
-    when(userRepository.existsByUsername(USERNAME)).thenReturn(true);
+      // When & Then
+      assertDoesNotThrow(() -> userService.createUser(createUserRequest));
+      assertThrows(
+          UserAlreadyExistsException.class, () -> userService.createUser(createUserRequest));
+    }
 
-    // When & Then
-    assertThrows(UserAlreadyExistsException.class, () -> userService.createUser(createUserRequest));
-    verify(userRepository, never()).save(any(UserEntity.class));
+    @Test
+    void createsUserWithEncodedPassword() {
+      var request = new CreateUserRequest(USERNAME, PASSWORD);
+
+      when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+
+      userService.createUser(request);
+      UserEntity user = userRepository.getUserEntityByUsername(USERNAME).orElseThrow();
+
+      assertEquals(ENCODED_PASSWORD, user.getPassword());
+    }
   }
 
   @Test
