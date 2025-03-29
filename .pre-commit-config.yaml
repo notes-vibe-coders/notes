@@ -3,6 +3,6 @@ repos:
     hooks:
       -   id: gradle
           name: Gradle spotlessApply
-          entry: bash -c './gradlew :spotlessApply'
+          entry: bash -c './gradlew spotlessApply && git add -u'
           language: system
           files: \.gradle|\.java|\.kt|\.xml|\.yml|\.yaml
