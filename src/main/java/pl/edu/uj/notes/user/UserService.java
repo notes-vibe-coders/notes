@@ -13,7 +13,7 @@ public class UserService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
 
-  public int createUser(CreateUserRequest request) {
+  public String createUser(CreateUserRequest request) {
     UserEntity user =
         new UserEntity(request.getUsername(), passwordEncoder.encode(request.getPassword()));
 
@@ -22,8 +22,7 @@ public class UserService {
       throw new UserAlreadyExistsException(message);
     }
 
-    userRepository.save(user);
-    return user.getId();
+    return userRepository.save(user).getId();
   }
 
   public Optional<UserEntity> getUserByUsername(String username) {
