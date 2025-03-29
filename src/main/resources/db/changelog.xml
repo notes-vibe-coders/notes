@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+  <changeSet id="1" author="prusnarczyk">
+    <createTable tableName="user_entity">
+      <column name="id" type="varchar">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="username" type="varchar">
+        <constraints unique="true"/>
+      </column>
+      <column name="password" type="varchar"/>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="2" author="prusnarczyk">
+    <createTable tableName="note">
+      <column name="id" type="varchar">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="title" type="varchar"/>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="3" author="prusnarczyk">
+    <createTable tableName="note_snapshot">
+      <column name="id" type="varchar">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="note_id" type="varchar">
+        <constraints foreignKeyName="id" references="note(id)"/>
+      </column>
+      <column name="content" type="varchar"/>
+    </createTable>
+  </changeSet>
+
+</databaseChangeLog>

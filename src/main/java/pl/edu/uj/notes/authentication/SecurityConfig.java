@@ -41,8 +41,11 @@ public class SecurityConfig {
   @Bean
   ApplicationListener<ApplicationReadyEvent> createAdmin(UserService userService) {
     return event -> {
-      var user = CreateUserRequest.builder().username("admin").password("admin").build();
-      userService.createUser(user);
+      var admin = userService.getUserByUsername("admin");
+      if (admin.isEmpty()) {
+        var user = CreateUserRequest.builder().username("admin").password("admin").build();
+        userService.createUser(user);
+      }
     };
   }
 }

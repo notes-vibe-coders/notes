@@ -40,7 +40,7 @@ public class UserServiceTest {
       CreateUserRequest createUserRequest = new CreateUserRequest(USERNAME, PASSWORD);
 
       // When
-      int id = userService.createUser(createUserRequest);
+      String id = userService.createUser(createUserRequest);
 
       // Then
       assertTrue(userRepository.existsById(id));
