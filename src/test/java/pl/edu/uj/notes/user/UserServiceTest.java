@@ -83,8 +83,7 @@ public class UserServiceTest {
     userService.deleteUser(userId);
 
     // Then
-    Optional<UserEntity> deletedUser = userRepository.findById(userId);
-    assertTrue(deletedUser.isEmpty());
+    assertFalse(userRepository.existsById(userId));
   }
 
   @Test
@@ -97,7 +96,6 @@ public class UserServiceTest {
             assertThrows(UserNotFoundException.class, () -> userService.deleteUser(userId));
 
     assertEquals("User with ID " + userId + " does not exist", exception.getMessage());
-    Optional<UserEntity> nonExistentUser = userRepository.findById(userId);
-    assertTrue(nonExistentUser.isEmpty());
+    assertFalse(userRepository.existsById(userId));
   }
 }
