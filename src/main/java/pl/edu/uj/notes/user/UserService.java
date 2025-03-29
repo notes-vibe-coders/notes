@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +24,17 @@ public class UserService {
     }
 
     return userRepository.save(user).getId();
+  }
+
+  public void deleteUser(DeleteUserRequest request) {
+    String id = request.getId();
+
+    UserEntity user =
+        userRepository
+            .findById(id)
+            .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " does not exist"));
+
+    userRepository.delete(user);
   }
 
   public Optional<UserEntity> getUserByUsername(String username) {

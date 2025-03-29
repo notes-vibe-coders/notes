@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(SecurityConfig.class)
@@ -69,5 +70,35 @@ public class UserServiceTest {
 
       assertEquals(ENCODED_PASSWORD, user.getPassword());
     }
+  }
+
+  @Test
+  void whenUserExists_thenDeleteUserSuccessfully() {
+    // Given
+    UserEntity user = new UserEntity(USERNAME, PASSWORD);
+    userRepository.save(user);
+    String userId = user.getId();
+
+    DeleteUserRequest deleteUserRequest = new DeleteUserRequest(userId);
+
+    // When
+    userService.deleteUser(deleteUserRequest);
+
+    // Then
+    assertFalse(userRepository.existsById(userId));
+  }
+
+  @Test
+  void whenUserDoesNotExist_thenThrowUserNotFoundException() {
+    // Given
+    String userId = "1e931558-2ef8-42ae-8642-3e72778de9c5";
+    DeleteUserRequest deleteUserRequest = new DeleteUserRequest(userId);
+
+    // When & Then
+    UserNotFoundException exception =
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUser(deleteUserRequest));
+
+    assertEquals("User with ID " + userId + " does not exist", exception.getMessage());
+    assertFalse(userRepository.existsById(userId));
   }
 }
