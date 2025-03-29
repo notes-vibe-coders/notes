@@ -1,8 +1,8 @@
--   repo: https://github.com/pre-commit/mirrors-gradle
-    rev: v0.0.7
+repos:
+-   repo: local
     hooks:
       -   id: gradle
           name: Gradle spotlessApply
-          entry: ./gradlew :spotlessApply
+          entry: bash -c './gradlew :spotlessApply'
           language: system
           files: \.gradle|\.java|\.kt|\.xml|\.yml|\.yaml
