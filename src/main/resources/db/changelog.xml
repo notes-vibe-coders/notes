@@ -36,5 +36,16 @@
       <column name="content" type="varchar"/>
     </createTable>
   </changeSet>
+  
+  <changeSet id="4" author="ksikora">
+    <addColumn tableName="note">
+      <column name="created_at" type="timestamp"/>
+      <column name="updated_at" type="timestamp"/>
+    </addColumn>
+    <addColumn tableName="note_snapshot">
+      <column name="created_at" type="timestamp"/>
+      <column name="updated_at" type="timestamp"/>
+    </addColumn>
+  </changeSet>
 
 </databaseChangeLog>
