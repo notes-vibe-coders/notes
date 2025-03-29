@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
 
 public class UserServiceTest {
 
@@ -58,5 +59,34 @@ public class UserServiceTest {
     // When & Then
     assertThrows(UserAlreadyExistsException.class, () -> userService.createUser(createUserRequest));
     verify(userRepository, never()).save(any(UserEntity.class));
+  }
+
+  @Test
+  void whenUserExists_thenDeleteUserSuccessfully() {
+    // Given
+    int userId = 1;
+    UserEntity user = new UserEntity(USERNAME, PASSWORD);
+
+    when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+
+    // When
+    userService.deleteUser(userId);
+
+    // Then
+    verify(userRepository, times(1)).delete(user);
+  }
+
+  @Test
+  void whenUserDoesNotExist_thenThrowUserNotFoundException() {
+    // Given
+    int userId = 1;
+    when(userRepository.findById(userId)).thenReturn(java.util.Optional.empty());
+
+    // When & Then
+    UserNotFoundException exception =
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUser(userId));
+
+    assertEquals("User with ID " + userId + " does not exist", exception.getMessage());
+    verify(userRepository, never()).delete(any(UserEntity.class));
   }
 }

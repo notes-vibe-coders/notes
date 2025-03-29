@@ -3,6 +3,7 @@ package pl.edu.uj.notes.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +26,7 @@ public class UserService {
     UserEntity user =
         userRepository
             .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " does not exist"));
     userRepository.delete(user);
   }
 }
