@@ -76,8 +76,8 @@ public class UserServiceTest {
   void whenUserExists_thenDeleteUserSuccessfully() {
     // Given
     UserEntity user = new UserEntity(USERNAME, PASSWORD);
-    String userId = user.getId();
     userRepository.save(user);
+    String userId = user.getId();
 
     DeleteUserRequest deleteUserRequest = new DeleteUserRequest(userId);
 
