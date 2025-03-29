@@ -52,18 +52,18 @@ class NoteServiceTest {
     }
 
     @Test
-    void createNoteReturnsIdOfSnapshot() {
-      var snapshotId = "testSnapshotId";
+    void createNoteReturnsId() {
+      var noteId = "noteId";
 
       var createNoteRequest = new CreateNoteRequest(TITLE, CONTENT);
 
       when(noteSnapshotRepository.save(any())).thenReturn(noteSnapshot);
       when(noteRepository.save(any())).thenReturn(note);
-      when(noteSnapshot.getId()).thenReturn(snapshotId);
+      when(note.getId()).thenReturn(noteId);
 
       var id = underTest.createNote(createNoteRequest);
 
-      assertThat(id).isEqualTo(snapshotId);
+      assertThat(id).isEqualTo(noteId);
     }
   }
 }

@@ -17,6 +17,7 @@ public class NoteService {
     note = noteRepository.save(note);
 
     NoteSnapshot noteSnapshot = new NoteSnapshot(note, request.content());
-    return noteSnapshotRepository.save(noteSnapshot).getId();
+    noteSnapshotRepository.save(noteSnapshot).getId();
+    return note.getId();
   }
 }
