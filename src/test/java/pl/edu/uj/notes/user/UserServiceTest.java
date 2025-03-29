@@ -77,27 +77,27 @@ public class UserServiceTest {
     // Given
     int userId = 1;
     UserEntity user = new UserEntity(USERNAME, PASSWORD);
-
-    when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+    userRepository.save(user);
 
     // When
     userService.deleteUser(userId);
 
     // Then
-    verify(userRepository, times(1)).delete(user);
+    Optional<UserEntity> deletedUser = userRepository.findById(userId);
+    assertTrue(deletedUser.isEmpty());
   }
 
   @Test
   void whenUserDoesNotExist_thenThrowUserNotFoundException() {
     // Given
     int userId = 1;
-    when(userRepository.findById(userId)).thenReturn(java.util.Optional.empty());
 
     // When & Then
     UserNotFoundException exception =
-        assertThrows(UserNotFoundException.class, () -> userService.deleteUser(userId));
+            assertThrows(UserNotFoundException.class, () -> userService.deleteUser(userId));
 
     assertEquals("User with ID " + userId + " does not exist", exception.getMessage());
-    verify(userRepository, never()).delete(any(UserEntity.class));
+    Optional<UserEntity> nonExistentUser = userRepository.findById(userId);
+    assertTrue(nonExistentUser.isEmpty());
   }
 }
