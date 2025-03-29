@@ -1,5 +1,6 @@
 package pl.edu.uj.notes.authentication;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -13,15 +14,20 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFilter;
+import pl.edu.uj.notes.audit.LoggingRequestFilter;
 import pl.edu.uj.notes.user.CreateUserRequest;
 import pl.edu.uj.notes.user.UserService;
 
 @Configuration
 @EnableMethodSecurity
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
   private static final String HEALTHCHECK_ROUTE = "/health";
   private static final String REGISTER_ROUTE = "/api/v1/user";
+
+  private final LoggingRequestFilter loggingRequestFilter;
 
   @Bean
   SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,6 +40,8 @@ public class SecurityConfig {
                 .permitAll()
                 .anyRequest()
                 .authenticated());
+
+    http.addFilterAfter(loggingRequestFilter, AuthenticationFilter.class);
 
     http.httpBasic(Customizer.withDefaults());
 
