@@ -4,11 +4,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -26,6 +22,12 @@ class UserController {
   @DeleteMapping("/{id}")
   ResponseEntity<Void> deleteUser(@Valid @RequestBody DeleteUserRequest request) {
     userService.deleteUser(request);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PutMapping("/password")
+  ResponseEntity<Void> updatePassword(@Valid @RequestBody UpdatePasswordRequest request) {
+    userService.updatePassword(request);
     return ResponseEntity.noContent().build();
   }
 }
