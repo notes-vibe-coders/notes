@@ -46,7 +46,8 @@ public class UserService {
   }
 
   public void updatePassword(UpdatePasswordRequest request) {
-    UserEntity user = userRepository
+    UserEntity user =
+        userRepository
             .findById(request.getUserId())
             .orElseThrow(() -> new UserNotFoundException("User not found"));
 

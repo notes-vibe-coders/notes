@@ -3,6 +3,7 @@ package pl.edu.uj.notes.user;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
-
-import java.util.UUID;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(SecurityConfig.class)
@@ -150,7 +149,8 @@ public class UserServiceTest {
       when(passwordEncoder.matches(wrongOldPassword, ENCODED_PASSWORD)).thenReturn(false);
 
       // When & Then
-      var exception = assertThrows(IllegalArgumentException.class, () -> userService.updatePassword(request));
+      var exception =
+          assertThrows(IllegalArgumentException.class, () -> userService.updatePassword(request));
       assertEquals("Old password is incorrect", exception.getMessage());
     }
 
@@ -164,7 +164,8 @@ public class UserServiceTest {
       request.setNewPassword("any");
 
       // When & Then
-      var exception = assertThrows(UserNotFoundException.class, () -> userService.updatePassword(request));
+      var exception =
+          assertThrows(UserNotFoundException.class, () -> userService.updatePassword(request));
       assertEquals("User not found", exception.getMessage());
     }
   }

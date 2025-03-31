@@ -2,8 +2,8 @@ package pl.edu.uj.notes.user;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +48,7 @@ class UserControllerTest {
   @Test
   void whenCorrectPasswordUpdateRequest_thenNoContent() throws Exception {
     String json =
-            """
+        """
             {
               "userId": "123e4567-e89b-12d3-a456-426614174000",
               "oldPassword": "old123",
@@ -58,7 +58,8 @@ class UserControllerTest {
 
     doNothing().when(userService).updatePassword(any());
 
-    mockMvc.perform(put(USER_URI + "/password").contentType(MediaType.APPLICATION_JSON).
-            content(json)).andExpect(status().isNoContent());
+    mockMvc
+        .perform(put(USER_URI + "/password").contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isNoContent());
   }
 }

@@ -5,12 +5,9 @@ import lombok.Data;
 
 @Data
 public class UpdatePasswordRequest {
-    @NotBlank
-    private String userId;
+  @NotBlank private String userId;
 
-    @NotBlank
-    private String oldPassword;
+  @NotBlank private String oldPassword;
 
-    @NotBlank
-    private String newPassword;
+  @NotBlank private String newPassword;
 }
