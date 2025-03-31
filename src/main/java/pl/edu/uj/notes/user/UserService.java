@@ -44,4 +44,17 @@ public class UserService {
 
     return userRepository.getUserEntityByUsername(username);
   }
+
+  public void updatePassword(UpdatePasswordRequest request) {
+    UserEntity user = userRepository
+            .findById(request.getUserId())
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+    if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+      throw new IllegalArgumentException("Old password is incorrect");
+    }
+
+    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+    userRepository.save(user);
+  }
 }

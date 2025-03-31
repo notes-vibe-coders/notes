@@ -15,6 +15,8 @@ import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
 
+import java.util.UUID;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(SecurityConfig.class)
 public class UserServiceTest {
@@ -100,5 +102,70 @@ public class UserServiceTest {
 
     assertEquals("User with ID " + userId + " does not exist", exception.getMessage());
     assertFalse(userRepository.existsById(userId));
+  }
+
+  @Nested
+  class UpdatePassword {
+
+    @Test
+    void whenCorrectOldPassword_thenUpdatePassword() {
+      // Given
+      when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+
+      UserEntity user = new UserEntity(USERNAME, ENCODED_PASSWORD);
+      userRepository.save(user);
+      String userId = user.getId();
+
+      String newPassword = "newSecret123";
+      String encodedNewPassword = "encodedNewPassword";
+      when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+      when(passwordEncoder.encode(newPassword)).thenReturn(encodedNewPassword);
+
+      UpdatePasswordRequest request = new UpdatePasswordRequest();
+      request.setUserId(userId);
+      request.setOldPassword(PASSWORD);
+      request.setNewPassword(newPassword);
+
+      // When
+      userService.updatePassword(request);
+
+      // Then
+      UserEntity updated = userRepository.findById(userId).orElseThrow();
+      assertEquals(encodedNewPassword, updated.getPassword());
+    }
+
+    @Test
+    void whenIncorrectOldPassword_thenThrowException() {
+      // Given
+      String wrongOldPassword = "wrong-password";
+      UserEntity user = new UserEntity(USERNAME, ENCODED_PASSWORD);
+      userRepository.save(user);
+      String userId = user.getId();
+
+      UpdatePasswordRequest request = new UpdatePasswordRequest();
+      request.setUserId(userId);
+      request.setOldPassword(wrongOldPassword);
+      request.setNewPassword("irrelevant");
+
+      when(passwordEncoder.matches(wrongOldPassword, ENCODED_PASSWORD)).thenReturn(false);
+
+      // When & Then
+      var exception = assertThrows(IllegalArgumentException.class, () -> userService.updatePassword(request));
+      assertEquals("Old password is incorrect", exception.getMessage());
+    }
+
+    @Test
+    void whenUserNotFound_thenThrowUserNotFoundException() {
+      // Given
+      String userId = UUID.randomUUID().toString();
+      UpdatePasswordRequest request = new UpdatePasswordRequest();
+      request.setUserId(userId);
+      request.setOldPassword("any");
+      request.setNewPassword("any");
+
+      // When & Then
+      var exception = assertThrows(UserNotFoundException.class, () -> userService.updatePassword(request));
+      assertEquals("User not found", exception.getMessage());
+    }
   }
 }
