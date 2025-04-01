@@ -1,8 +1,13 @@
 package pl.edu.uj.notes.note;
 
 import jakarta.transaction.Transactional;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import pl.edu.uj.notes.note.exception.NoteNotFoundException;
+import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
 @Component
 @RequiredArgsConstructor
@@ -17,7 +22,52 @@ public class NoteService {
     note = noteRepository.save(note);
 
     NoteSnapshot noteSnapshot = new NoteSnapshot(note, request.content());
-    noteSnapshotRepository.save(noteSnapshot).getId();
+    noteSnapshotRepository.save(noteSnapshot);
     return note.getId();
+  }
+
+  public NoteDTO getNote(String id) {
+    Note note =
+        noteRepository
+            .findById(id)
+            .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
+    NoteSnapshot recentMostSnapshot =
+        noteSnapshotRepository
+            .findFirstByNoteIdOrderByCreatedAtDesc(note)
+            .orElseThrow(
+                () -> new NoteSnapshotNotFoundException("Note snapshot not found for note: " + id));
+
+    return new NoteDTO(
+        note.getId(),
+        note.getTitle(),
+        recentMostSnapshot.getContent(),
+        note.getCreatedAt(),
+        note.getUpdatedAt());
+  }
+
+  public List<NoteDTO> getAllNotes() {
+    Map<Note, NoteSnapshot> noteSnapshotMap =
+        noteRepository.findAll().stream()
+            .collect(
+                Collectors.toMap(
+                    note -> note,
+                    note ->
+                        noteSnapshotRepository
+                            .findFirstByNoteIdOrderByCreatedAtDesc(note)
+                            .orElseThrow(
+                                () ->
+                                    new NoteSnapshotNotFoundException(
+                                        "Note snapshot not found for note: " + note.getId()))));
+
+    return noteSnapshotMap.entrySet().stream()
+        .map(
+            entry ->
+                new NoteDTO(
+                    entry.getKey().getId(),
+                    entry.getKey().getTitle(),
+                    entry.getValue().getContent(),
+                    entry.getKey().getCreatedAt(),
+                    entry.getKey().getUpdatedAt()))
+        .toList();
   }
 }

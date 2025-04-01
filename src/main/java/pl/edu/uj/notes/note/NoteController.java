@@ -1,15 +1,13 @@
 package pl.edu.uj.notes.note;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import java.net.URI;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,5 +21,17 @@ class NoteController {
   ResponseEntity<Void> createNote(@Valid @RequestBody CreateNoteRequest request) throws Exception {
     var location = new URI("api/v1/notes/" + noteService.createNote(request));
     return ResponseEntity.created(location).build();
+  }
+
+  @GetMapping("/{id}")
+  @ResponseStatus(HttpStatus.OK)
+  ResponseEntity<NoteDTO> getNote(@PathVariable @NotBlank String id) {
+    return ResponseEntity.ok(noteService.getNote(id));
+  }
+
+  @GetMapping()
+  @ResponseStatus(HttpStatus.OK)
+  ResponseEntity<List<NoteDTO>> getAllNotes() {
+    return ResponseEntity.ok(noteService.getAllNotes());
   }
 }

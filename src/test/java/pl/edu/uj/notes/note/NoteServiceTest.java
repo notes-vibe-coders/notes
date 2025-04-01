@@ -1,10 +1,13 @@
 package pl.edu.uj.notes.note;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,12 +16,15 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.edu.uj.notes.note.exception.NoteNotFoundException;
+import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class NoteServiceTest {
 
   String TITLE = "testTitle";
   String CONTENT = "testContent";
+  String NOTE_ID = "noteId";
 
   @Mock NoteSnapshotRepository noteSnapshotRepository;
   @Mock NoteRepository noteRepository;
@@ -53,17 +59,77 @@ class NoteServiceTest {
 
     @Test
     void createNoteReturnsId() {
-      var noteId = "noteId";
-
       var createNoteRequest = new CreateNoteRequest(TITLE, CONTENT);
 
       when(noteSnapshotRepository.save(any())).thenReturn(noteSnapshot);
       when(noteRepository.save(any())).thenReturn(note);
-      when(note.getId()).thenReturn(noteId);
+      when(note.getId()).thenReturn(NOTE_ID);
 
       var id = underTest.createNote(createNoteRequest);
 
-      assertThat(id).isEqualTo(noteId);
+      assertThat(id).isEqualTo(NOTE_ID);
+    }
+  }
+
+  @Nested
+  class getNotes {
+
+    @Test
+    void getNoteById_thenReturnNote() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+          .thenReturn(Optional.of(noteSnapshot));
+
+      NoteDTO response = underTest.getNote(NOTE_ID);
+
+      assertThat(response)
+          .extracting(
+              NoteDTO::id, NoteDTO::title, NoteDTO::content, NoteDTO::createdAt, NoteDTO::updatedAt)
+          .containsExactly(
+              note.getId(),
+              note.getTitle(),
+              noteSnapshot.getContent(),
+              note.getCreatedAt(),
+              note.getUpdatedAt());
+    }
+
+    @Test
+    void getNoteById_thenNoteNotFound() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.empty());
+
+      assertThrows(NoteNotFoundException.class, () -> underTest.getNote(NOTE_ID));
+    }
+
+    @Test
+    void getNoteById_thenNoteSnapshotNotFound() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+          .thenReturn(Optional.empty());
+
+      assertThrows(NoteSnapshotNotFoundException.class, () -> underTest.getNote(NOTE_ID));
+    }
+
+    @Test
+    void getAllNotes_thenReturnAllNotes() {
+      when(noteRepository.findAll()).thenReturn(List.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+          .thenReturn(Optional.of(noteSnapshot));
+
+      List<NoteDTO> response = underTest.getAllNotes();
+
+      verify(noteRepository, times(1)).findAll();
+      verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
+
+      assertEquals(1, response.size());
+      assertThat(response.getFirst())
+          .extracting(
+              NoteDTO::id, NoteDTO::title, NoteDTO::content, NoteDTO::createdAt, NoteDTO::updatedAt)
+          .containsExactly(
+              note.getId(),
+              note.getTitle(),
+              noteSnapshot.getContent(),
+              note.getCreatedAt(),
+              note.getUpdatedAt());
     }
   }
 }
