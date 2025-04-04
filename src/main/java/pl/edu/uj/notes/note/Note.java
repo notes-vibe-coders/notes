@@ -22,6 +22,8 @@ public class Note {
 
   @LastModifiedDate private Instant updatedAt;
 
+  private boolean active = true;
+
   public Note(String title) {
     this.title = title;
   }
