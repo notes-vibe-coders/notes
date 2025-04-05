@@ -1,6 +1,10 @@
 package pl.edu.uj.notes.note;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import java.time.Instant;
 import lombok.Data;
 import lombok.NoArgsConstructor;
