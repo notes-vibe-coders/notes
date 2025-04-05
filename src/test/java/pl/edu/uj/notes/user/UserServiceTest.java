@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
-import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
-import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
+import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exception.UserNotFoundException;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(SecurityConfig.class)

@@ -1,4 +1,4 @@
-package pl.edu.uj.notes.user.exceptions;
+package pl.edu.uj.notes.user.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

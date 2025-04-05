@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
-import pl.edu.uj.notes.note.exceptions.NoteNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class NoteServiceTest {
@@ -159,11 +158,7 @@ class NoteServiceTest {
       when(noteRepository.findById(ID)).thenReturn(Optional.empty());
 
       NoteNotFoundException e =
-          assertThrows(
-              NoteNotFoundException.class,
-              () -> {
-                underTest.deleteNote(deleteNoteRequest);
-              });
+          assertThrows(NoteNotFoundException.class, () -> underTest.deleteNote(deleteNoteRequest));
 
       assertThat(e.getMessage()).isEqualTo("Note with ID " + ID + " does not exist");
     }

@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
-import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
+import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exception.UserNotFoundException;
 
 @Service
 @RequiredArgsConstructor
