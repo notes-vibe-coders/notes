@@ -3,6 +3,7 @@ package pl.edu.uj.notes.note;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,20 @@ public class NoteService {
     NoteSnapshot noteSnapshot = new NoteSnapshot(note, request.content());
     noteSnapshotRepository.save(noteSnapshot);
     return note.getId();
+  }
+
+  void deleteNote(DeleteNoteRequest request) {
+    String id = request.id();
+
+    Optional<Note> noteOptional = noteRepository.findById(id);
+
+    if (noteOptional.isPresent()) {
+      Note note = noteOptional.get();
+      note.setActive(false);
+      noteRepository.save(note);
+    } else {
+      throw new NoteNotFoundException("Note with ID " + id + " does not exist");
+    }
   }
 
   public NoteDTO getNote(String id) {

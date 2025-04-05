@@ -34,4 +34,11 @@ class NoteController {
   ResponseEntity<List<NoteDTO>> getAllNotes() {
     return ResponseEntity.ok(noteService.getAllNotes());
   }
+
+  @DeleteMapping
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  ResponseEntity<Void> deleteNote(@Valid @RequestBody DeleteNoteRequest request) {
+    noteService.deleteNote(request);
+    return ResponseEntity.noContent().build();
+  }
 }

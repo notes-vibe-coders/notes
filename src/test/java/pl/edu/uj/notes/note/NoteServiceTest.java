@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
+import pl.edu.uj.notes.note.exceptions.NoteNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class NoteServiceTest {
@@ -25,6 +26,7 @@ class NoteServiceTest {
   String TITLE = "testTitle";
   String CONTENT = "testContent";
   String NOTE_ID = "noteId";
+  String ID = "testId";
 
   @Mock NoteSnapshotRepository noteSnapshotRepository;
   @Mock NoteRepository noteRepository;
@@ -130,6 +132,40 @@ class NoteServiceTest {
               noteSnapshot.getContent(),
               note.getCreatedAt(),
               note.getUpdatedAt());
+    }
+  }
+
+  @Nested
+  class deleteNote {
+
+    @Test
+    void deleteNoteDeactivatesExistingNote() {
+      var deleteNoteRequest = new DeleteNoteRequest(ID);
+
+      when(noteRepository.findById(ID)).thenReturn(Optional.of(note));
+
+      underTest.deleteNote(deleteNoteRequest);
+
+      verify(note).setActive(false);
+      verify(noteRepository).save(note);
+
+      assertThat(note.isActive()).isFalse();
+    }
+
+    @Test
+    void deleteNoteThrowsExceptionWhenNoteDoesNotExist() {
+      var deleteNoteRequest = new DeleteNoteRequest(ID);
+
+      when(noteRepository.findById(ID)).thenReturn(Optional.empty());
+
+      NoteNotFoundException e =
+          assertThrows(
+              NoteNotFoundException.class,
+              () -> {
+                underTest.deleteNote(deleteNoteRequest);
+              });
+
+      assertThat(e.getMessage()).isEqualTo("Note with ID " + ID + " does not exist");
     }
   }
 }

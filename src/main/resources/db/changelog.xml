@@ -48,4 +48,10 @@
     </addColumn>
   </changeSet>
 
+  <changeSet id="5" author="wzdeb">
+    <addColumn tableName="note">
+      <column name="active" type="boolean" defaultValueBoolean="true"/>
+    </addColumn>
+  </changeSet>
+
 </databaseChangeLog>
