@@ -81,7 +81,7 @@ class NoteControllerTest {
     var request =
         """
             {
-              "id": null,
+              "id": null
             }
             """;
 
@@ -98,13 +98,13 @@ class NoteControllerTest {
     var request =
         """
             {
-              "id": "non-existing-id",
+              "id": "non-existing-id"
             }
             """;
 
     Mockito.doThrow(new NoteNotFoundException("Note with ID " + id + " does not exist"))
         .when(noteService)
-        .deleteNote(new DeleteNoteRequest(id));
+        .deleteNote(deleteNoteRequest);
 
     mockMvc
         .perform(delete(NOTE_URI).contentType(MediaType.APPLICATION_JSON).content(request))
@@ -119,7 +119,7 @@ class NoteControllerTest {
     var request =
         """
             {
-              "id": "existing-id",
+              "id": "existing-id"
             }
             """;
 
