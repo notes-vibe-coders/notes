@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -65,7 +66,7 @@ public class NoteService {
         noteRepository.findAll().stream()
             .collect(
                 Collectors.toMap(
-                    note -> note,
+                    Function.identity(),
                     note ->
                         noteSnapshotRepository
                             .findFirstByNoteIdOrderByCreatedAtDesc(note)
