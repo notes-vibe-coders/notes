@@ -5,12 +5,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.With;
 
 @Entity
 @Data
+@With
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserEntity {
 
   @Id
@@ -22,8 +26,11 @@ public class UserEntity {
 
   private String password;
 
+  private boolean isAdmin;
+
   public UserEntity(String username, String password) {
     this.username = username;
     this.password = password;
+    this.isAdmin = false;
   }
 }

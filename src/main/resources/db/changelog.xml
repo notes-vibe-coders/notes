@@ -36,7 +36,7 @@
       <column name="content" type="varchar"/>
     </createTable>
   </changeSet>
-  
+
   <changeSet id="4" author="ksikora">
     <addColumn tableName="note">
       <column name="created_at" type="timestamp"/>
@@ -52,6 +52,16 @@
     <addColumn tableName="note">
       <column name="active" type="boolean" defaultValueBoolean="true"/>
     </addColumn>
+  </changeSet>
+
+  <changeSet id="6" author="prusnarczyk">
+    <addColumn tableName="user_entity">
+      <column name="is_admin" type="boolean" defaultValue="false"/>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="7" author="prusnarczyk">
+    <loadData tableName="user_entity" file="classpath:db/admin.csv"/>
   </changeSet>
 
 </databaseChangeLog>

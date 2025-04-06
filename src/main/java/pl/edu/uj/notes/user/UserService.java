@@ -1,10 +1,11 @@
 package pl.edu.uj.notes.user;
 
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import pl.edu.uj.notes.authorization.AccessControlService;
+import pl.edu.uj.notes.authorization.Action;
+import pl.edu.uj.notes.user.exception.UnauthorizedUserAccessException;
 import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exception.UserNotFoundException;
 
@@ -13,6 +14,7 @@ import pl.edu.uj.notes.user.exception.UserNotFoundException;
 public class UserService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final AccessControlService accessControlService;
 
   public String createUser(CreateUserRequest request) {
     UserEntity user =
@@ -27,21 +29,17 @@ public class UserService {
   }
 
   public void deleteUser(DeleteUserRequest request) {
-    String id = request.getId();
+    var userToBeDeletedOptional = userRepository.findById(request.getId());
 
-    UserEntity user =
-        userRepository
-            .findById(id)
-            .orElseThrow(() -> new UserNotFoundException("User with ID " + id + " does not exist"));
-
-    userRepository.delete(user);
-  }
-
-  public Optional<UserEntity> getUserByUsername(String username) {
-    if (StringUtils.isBlank(username)) {
-      throw new IllegalArgumentException("Username should not be null or empty");
+    if (userToBeDeletedOptional.isEmpty()) {
+      throw new UserNotFoundException("User not found");
     }
 
-    return userRepository.getUserEntityByUsername(username);
+    if (!accessControlService.userHasAccessTo(userToBeDeletedOptional.get(), Action.WRITE)) {
+      throw new UnauthorizedUserAccessException(
+          "You are not allowed to modify user " + request.getId());
+    }
+
+    userRepository.delete(userToBeDeletedOptional.get());
   }
 }
