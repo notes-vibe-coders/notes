@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -40,5 +41,12 @@ class NoteController {
   ResponseEntity<Void> deleteNote(@Valid @RequestBody DeleteNoteRequest request) {
     noteService.deleteNote(request);
     return ResponseEntity.noContent().build();
+  }
+
+  @PutMapping("/{id}")
+  @ResponseStatus(HttpStatus.ACCEPTED)
+  ResponseEntity<NoteDTO> updateNote(
+      @PathVariable @NotBlank String id, @Validated @RequestBody CreateNoteRequest request) {
+    return ResponseEntity.accepted().body(noteService.updateNote(id, request));
   }
 }

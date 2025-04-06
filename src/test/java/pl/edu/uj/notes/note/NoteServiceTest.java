@@ -1,11 +1,14 @@
 package pl.edu.uj.notes.note;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
@@ -161,6 +164,134 @@ class NoteServiceTest {
           assertThrows(NoteNotFoundException.class, () -> underTest.deleteNote(deleteNoteRequest));
 
       assertThat(e.getMessage()).isEqualTo("Note with ID " + ID + " does not exist");
+    }
+  }
+
+  @Nested
+  class updateNote {
+
+    Note TEST_NOTE =
+        new Note(
+            ID, TITLE, Instant.now().minus(10, MINUTES), Instant.now().minus(5, MINUTES), true);
+    NoteSnapshot TEST_SNAPSHOT =
+        new NoteSnapshot(
+            ID,
+            TEST_NOTE,
+            CONTENT,
+            Instant.now().minus(2, MINUTES),
+            Instant.now().minus(1, MINUTES));
+
+    @Test
+    void noteNotFound_throwsNotFoundException() {
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+
+      assertThatCode(() -> underTest.updateNote(ID, updateRequest))
+          .isExactlyInstanceOf(NoteNotFoundException.class);
+    }
+
+    @Test
+    void noteNotActive_throwsNotFoundException() {
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var note = TEST_NOTE.withActive(false);
+
+      when(noteRepository.findById(any())).thenReturn(Optional.of(note));
+
+      assertThatCode(() -> underTest.updateNote(ID, updateRequest))
+          .isExactlyInstanceOf(NoteNotFoundException.class);
+    }
+
+    @Test
+    void titleUpdated(@Captor ArgumentCaptor<Note> captor) {
+      var newTile = TITLE + "new";
+      var now = Instant.now();
+
+      var updateRequest = new CreateNoteRequest(newTile, CONTENT);
+
+      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
+          .thenReturn(Optional.of(TEST_SNAPSHOT));
+      when(noteRepository.save(any())).thenReturn(TEST_NOTE.withTitle(newTile).withUpdatedAt(now));
+
+      var result = underTest.updateNote(ID, updateRequest);
+
+      assertThat(result)
+          .isEqualTo(new NoteDTO(ID, newTile, CONTENT, TEST_NOTE.getCreatedAt(), now));
+
+      verify(noteRepository).save(captor.capture());
+
+      assertThat(captor.getValue()).extracting(Note::getTitle).isEqualTo(newTile);
+    }
+
+    @Test
+    void noChangesInTitle() {
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+
+      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
+          .thenReturn(Optional.of(TEST_SNAPSHOT));
+
+      var result = underTest.updateNote(ID, updateRequest);
+
+      assertThat(result)
+          .isEqualTo(
+              new NoteDTO(
+                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), TEST_SNAPSHOT.getUpdatedAt()));
+
+      verify(noteRepository, never()).save(any());
+    }
+
+    @Test
+    void noLatestSnapshot() {
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var now = Instant.now();
+
+      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
+          .thenReturn(Optional.empty());
+      when(noteSnapshotRepository.save(any())).thenReturn(TEST_SNAPSHOT.withUpdatedAt(now));
+
+      var result = underTest.updateNote(ID, updateRequest);
+
+      assertThat(result).isEqualTo(new NoteDTO(ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now));
+
+      verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, CONTENT));
+    }
+
+    @Test
+    void contentUpdated() {
+      var newContent = CONTENT + "new";
+      var now = Instant.now();
+
+      var updateRequest = new CreateNoteRequest(TITLE, newContent);
+
+      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
+          .thenReturn(Optional.of(TEST_SNAPSHOT));
+      when(noteSnapshotRepository.save(any())).thenReturn(TEST_SNAPSHOT.withUpdatedAt(now));
+
+      var result = underTest.updateNote(ID, updateRequest);
+
+      assertThat(result).isEqualTo(new NoteDTO(ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now));
+
+      verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, newContent));
+    }
+
+    @Test
+    void noChangesInContent() {
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+
+      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
+          .thenReturn(Optional.of(TEST_SNAPSHOT));
+
+      var result = underTest.updateNote(ID, updateRequest);
+
+      assertThat(result)
+          .isEqualTo(
+              new NoteDTO(
+                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), TEST_SNAPSHOT.getUpdatedAt()));
+
+      verify(noteSnapshotRepository, never()).save(any());
     }
   }
 }
