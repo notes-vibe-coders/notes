@@ -1,8 +1,6 @@
 package pl.edu.uj.notes.authentication;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,8 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFilter;
 import pl.edu.uj.notes.audit.LoggingRequestFilter;
-import pl.edu.uj.notes.user.CreateUserRequest;
-import pl.edu.uj.notes.user.UserService;
 
 @Configuration
 @EnableMethodSecurity
@@ -54,16 +50,5 @@ public class SecurityConfig {
   @Bean
   PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
-  }
-
-  @Bean
-  ApplicationListener<ApplicationReadyEvent> createAdmin(UserService userService) {
-    return event -> {
-      var admin = userService.getUserByUsername("admin");
-      if (admin.isEmpty()) {
-        var user = CreateUserRequest.builder().username("admin").password("admin").build();
-        userService.createUser(user);
-      }
-    };
   }
 }

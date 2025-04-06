@@ -8,14 +8,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import pl.edu.uj.notes.user.InternalUserService;
 import pl.edu.uj.notes.user.UserEntity;
-import pl.edu.uj.notes.user.UserService;
 
 @Component
 @RequiredArgsConstructor
 class AuthenticationService implements UserDetailsService {
 
-  private final UserService userService;
+  private final InternalUserService userService;
 
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
