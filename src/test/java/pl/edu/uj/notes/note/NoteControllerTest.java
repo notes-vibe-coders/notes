@@ -1,9 +1,14 @@
 package pl.edu.uj.notes.note;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -12,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import pl.edu.uj.notes.authentication.SecurityConfig;
+import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.user.UserService;
 
 @WebMvcTest(NoteController.class)
@@ -58,7 +64,7 @@ class NoteControllerTest {
 
   @Test
   @WithMockUser
-  void happyPath_callsToCreteNote() throws Exception {
+  void happyPath_callsToCreateNote() throws Exception {
     var request =
         """
             {
@@ -70,5 +76,86 @@ class NoteControllerTest {
     mockMvc
         .perform(post(NOTE_URI).contentType(MediaType.APPLICATION_JSON).content(request))
         .andExpect(status().isCreated());
+  }
+
+  @Test
+  @WithMockUser
+  void deleteNote_blankId_badRequest() throws Exception {
+    var request =
+        """
+            {
+              "id": null
+            }
+            """;
+
+    mockMvc
+        .perform(delete(NOTE_URI).contentType(MediaType.APPLICATION_JSON).content(request))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @WithMockUser
+  void deleteNote_noteNotFound_returnsNotFound() throws Exception {
+    String id = "non-existing-id";
+    DeleteNoteRequest deleteNoteRequest = new DeleteNoteRequest(id);
+    var request =
+        """
+            {
+              "id": "non-existing-id"
+            }
+            """;
+
+    Mockito.doThrow(new NoteNotFoundException("Note with ID " + id + " does not exist"))
+        .when(noteService)
+        .deleteNote(deleteNoteRequest);
+
+    mockMvc
+        .perform(delete(NOTE_URI).contentType(MediaType.APPLICATION_JSON).content(request))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @WithMockUser
+  void deleteNote_noteExists_noContent() throws Exception {
+    String id = "existing-id";
+
+    var request =
+        """
+            {
+              "id": "existing-id"
+            }
+            """;
+
+    Mockito.doNothing().when(noteService).deleteNote(new DeleteNoteRequest(id));
+
+    mockMvc
+        .perform(delete(NOTE_URI).contentType(MediaType.APPLICATION_JSON).content(request))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  @WithMockUser
+  void happyPath_callsToGetNoteById() throws Exception {
+    mockMvc
+        .perform(get(NOTE_URI + "/noteId").contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  @WithMockUser
+  void happyPath_callsToGetAllNotes() throws Exception {
+    mockMvc
+        .perform(get(NOTE_URI).contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  @WithMockUser
+  void noteNotFound_statusNotFound() throws Exception {
+    when(noteService.getNote(anyString())).thenThrow(NoteNotFoundException.class);
+
+    mockMvc
+        .perform(get(NOTE_URI + "/noteId").contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
   }
 }

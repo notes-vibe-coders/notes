@@ -1,6 +1,8 @@
 package pl.edu.uj.notes.user;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
@@ -13,8 +15,10 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
-import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
-import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
+import pl.edu.uj.notes.authorization.AccessControlService;
+import pl.edu.uj.notes.user.exception.UnauthorizedUserAccessException;
+import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
+import pl.edu.uj.notes.user.exception.UserNotFoundException;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(SecurityConfig.class)
@@ -27,6 +31,7 @@ public class UserServiceTest {
   @Autowired private UserRepository userRepository;
   @Autowired private UserService userService;
   @MockitoBean private PasswordEncoder passwordEncoder;
+  @MockitoBean private AccessControlService accessControlService;
 
   @AfterEach
   void tearDown() {
@@ -79,6 +84,7 @@ public class UserServiceTest {
     UserEntity user = new UserEntity(USERNAME, PASSWORD);
     userRepository.save(user);
     String userId = user.getId();
+    when(accessControlService.userHasAccessTo(any(), any())).thenReturn(true);
 
     DeleteUserRequest deleteUserRequest = new DeleteUserRequest(userId);
 
@@ -87,6 +93,20 @@ public class UserServiceTest {
 
     // Then
     assertFalse(userRepository.existsById(userId));
+  }
+
+  @Test
+  void notAdminTryingToDeleteOtherUser_unauthorizedException() {
+    UserEntity user = new UserEntity(USERNAME, PASSWORD);
+    userRepository.save(user);
+    String userId = user.getId();
+    when(accessControlService.userHasAccessTo(any(), any())).thenReturn(false);
+
+    DeleteUserRequest deleteUserRequest = new DeleteUserRequest(userId);
+
+    // When
+    assertThatCode(() -> userService.deleteUser(deleteUserRequest))
+        .isExactlyInstanceOf(UnauthorizedUserAccessException.class);
   }
 
   @Test
@@ -99,7 +119,7 @@ public class UserServiceTest {
     UserNotFoundException exception =
         assertThrows(UserNotFoundException.class, () -> userService.deleteUser(deleteUserRequest));
 
-    assertEquals("User with ID " + userId + " does not exist", exception.getMessage());
+    assertEquals("User not found", exception.getMessage());
     assertFalse(userRepository.existsById(userId));
   }
 

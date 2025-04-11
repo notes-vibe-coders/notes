@@ -1,4 +1,4 @@
-package pl.edu.uj.notes.user.exceptions;
+package pl.edu.uj.notes.user.exception;
 
 public class InvalidOldPasswordException extends RuntimeException{
     public InvalidOldPasswordException(String message) {

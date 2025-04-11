@@ -15,13 +15,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import pl.edu.uj.notes.user.InternalUserService;
 import pl.edu.uj.notes.user.UserEntity;
-import pl.edu.uj.notes.user.UserService;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
 
-  @Mock UserService userService;
+  @Mock InternalUserService userService;
 
   @InjectMocks AuthenticationService underTest;
 
