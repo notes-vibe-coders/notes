@@ -155,7 +155,6 @@ public class UserServiceTest {
       assertEquals(encodedNewPassword, updated.getPassword());
     }
 
-
     @Test
     void whenIncorrectOldPassword_thenThrowException() {
       // Given
@@ -173,13 +172,11 @@ public class UserServiceTest {
       when(passwordEncoder.matches(wrongOldPassword, ENCODED_PASSWORD)).thenReturn(false);
 
       // When & Then
-      var exception = assertThrows(
-              InvalidOldPasswordException.class,
-              () -> userService.updatePassword(request)
-      );
+      var exception =
+          assertThrows(
+              InvalidOldPasswordException.class, () -> userService.updatePassword(request));
       assertEquals("Old password is incorrect", exception.getMessage());
     }
-
 
     @Test
     void whenUserNotFound_thenThrowUserNotFoundException() {
