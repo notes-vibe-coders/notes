@@ -54,7 +54,7 @@ public class UserService {
       throw new UnauthorizedUserAccessException("You are not allowed to update user " + request.getUserId());
     }
     if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-      throw new IllegalArgumentException("Old password is incorrect");
+      throw new InvalidOldPasswordException("Old password is incorrect");
     }
     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
     userRepository.save(user);

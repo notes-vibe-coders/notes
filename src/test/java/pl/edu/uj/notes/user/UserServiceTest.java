@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.authorization.AccessControlService;
+import pl.edu.uj.notes.user.exception.InvalidOldPasswordException;
 import pl.edu.uj.notes.user.exception.UnauthorizedUserAccessException;
 import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exception.UserNotFoundException;
@@ -130,6 +131,7 @@ public class UserServiceTest {
     void whenCorrectOldPassword_thenUpdatePassword() {
       // Given
       when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+      when(accessControlService.userHasAccessTo(any(), any())).thenReturn(true);
 
       UserEntity user = new UserEntity(USERNAME, ENCODED_PASSWORD);
       userRepository.save(user);
@@ -153,6 +155,7 @@ public class UserServiceTest {
       assertEquals(encodedNewPassword, updated.getPassword());
     }
 
+
     @Test
     void whenIncorrectOldPassword_thenThrowException() {
       // Given
@@ -166,13 +169,17 @@ public class UserServiceTest {
       request.setOldPassword(wrongOldPassword);
       request.setNewPassword("irrelevant");
 
+      when(accessControlService.userHasAccessTo(any(), any())).thenReturn(true);
       when(passwordEncoder.matches(wrongOldPassword, ENCODED_PASSWORD)).thenReturn(false);
 
       // When & Then
-      var exception =
-          assertThrows(IllegalArgumentException.class, () -> userService.updatePassword(request));
+      var exception = assertThrows(
+              InvalidOldPasswordException.class,
+              () -> userService.updatePassword(request)
+      );
       assertEquals("Old password is incorrect", exception.getMessage());
     }
+
 
     @Test
     void whenUserNotFound_thenThrowUserNotFoundException() {
