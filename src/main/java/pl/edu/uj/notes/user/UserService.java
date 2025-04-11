@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import pl.edu.uj.notes.user.exceptions.InvalidOldPasswordException;
 import pl.edu.uj.notes.user.exceptions.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exceptions.UserNotFoundException;
 
@@ -52,7 +53,8 @@ public class UserService {
             .orElseThrow(() -> new UserNotFoundException("User not found"));
 
     if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-      throw new IllegalArgumentException("Old password is incorrect");
+      throw new InvalidOldPasswordException(
+          "Old password is invalid. Please provide the correct old password.");
     }
 
     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
