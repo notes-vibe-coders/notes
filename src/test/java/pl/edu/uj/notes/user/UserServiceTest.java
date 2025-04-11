@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.authorization.AccessControlService;
+import pl.edu.uj.notes.user.exception.InvalidOldPasswordException;
 import pl.edu.uj.notes.user.exception.UnauthorizedUserAccessException;
 import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exception.UserNotFoundException;
@@ -120,5 +122,75 @@ public class UserServiceTest {
 
     assertEquals("User not found", exception.getMessage());
     assertFalse(userRepository.existsById(userId));
+  }
+
+  @Nested
+  class UpdatePassword {
+
+    @Test
+    void whenCorrectOldPassword_thenUpdatePassword() {
+      // Given
+      when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+      when(accessControlService.userHasAccessTo(any(), any())).thenReturn(true);
+
+      UserEntity user = new UserEntity(USERNAME, ENCODED_PASSWORD);
+      userRepository.save(user);
+      String userId = user.getId();
+
+      String newPassword = "newSecret123";
+      String encodedNewPassword = "encodedNewPassword";
+      when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+      when(passwordEncoder.encode(newPassword)).thenReturn(encodedNewPassword);
+
+      UpdatePasswordRequest request = new UpdatePasswordRequest();
+      request.setUserId(userId);
+      request.setOldPassword(PASSWORD);
+      request.setNewPassword(newPassword);
+
+      // When
+      userService.updatePassword(request);
+
+      // Then
+      UserEntity updated = userRepository.findById(userId).orElseThrow();
+      assertEquals(encodedNewPassword, updated.getPassword());
+    }
+
+    @Test
+    void whenIncorrectOldPassword_thenThrowException() {
+      // Given
+      String wrongOldPassword = "wrong-password";
+      UserEntity user = new UserEntity(USERNAME, ENCODED_PASSWORD);
+      userRepository.save(user);
+      String userId = user.getId();
+
+      UpdatePasswordRequest request = new UpdatePasswordRequest();
+      request.setUserId(userId);
+      request.setOldPassword(wrongOldPassword);
+      request.setNewPassword("irrelevant");
+
+      when(accessControlService.userHasAccessTo(any(), any())).thenReturn(true);
+      when(passwordEncoder.matches(wrongOldPassword, ENCODED_PASSWORD)).thenReturn(false);
+
+      // When & Then
+      var exception =
+          assertThrows(
+              InvalidOldPasswordException.class, () -> userService.updatePassword(request));
+      assertEquals("Old password is incorrect", exception.getMessage());
+    }
+
+    @Test
+    void whenUserNotFound_thenThrowUserNotFoundException() {
+      // Given
+      String userId = UUID.randomUUID().toString();
+      UpdatePasswordRequest request = new UpdatePasswordRequest();
+      request.setUserId(userId);
+      request.setOldPassword("any");
+      request.setNewPassword("any");
+
+      // When & Then
+      var exception =
+          assertThrows(UserNotFoundException.class, () -> userService.updatePassword(request));
+      assertEquals("User not found", exception.getMessage());
+    }
   }
 }

@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.edu.uj.notes.authorization.AccessControlService;
 import pl.edu.uj.notes.authorization.Action;
+import pl.edu.uj.notes.user.exception.InvalidOldPasswordException;
 import pl.edu.uj.notes.user.exception.UnauthorizedUserAccessException;
 import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exception.UserNotFoundException;
@@ -41,5 +42,22 @@ public class UserService {
     }
 
     userRepository.delete(userToBeDeletedOptional.get());
+  }
+
+  public void updatePassword(UpdatePasswordRequest request) {
+    var userOptional = userRepository.findById(request.getUserId());
+    if (userOptional.isEmpty()) {
+      throw new UserNotFoundException("User not found");
+    }
+    UserEntity user = userOptional.get();
+    if (!accessControlService.userHasAccessTo(user, Action.WRITE)) {
+      throw new UnauthorizedUserAccessException(
+          "You are not allowed to update user " + request.getUserId());
+    }
+    if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+      throw new InvalidOldPasswordException("Old password is incorrect");
+    }
+    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+    userRepository.save(user);
   }
 }
