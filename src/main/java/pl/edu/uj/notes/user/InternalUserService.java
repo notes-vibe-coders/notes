@@ -11,6 +11,9 @@ public class InternalUserService {
 
   private final UserRepository userRepository;
 
+  /*
+  TODO: please run test coverage - if I see correctly this method is effectively not tested
+   */
   public Optional<UserEntity> getUserByUsername(String username) {
     if (StringUtils.isBlank(username)) {
       throw new IllegalArgumentException("Username should not be null or empty");

@@ -18,6 +18,9 @@ class NoteController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
+  /*
+  TODO: Void is not returned here
+   */
   ResponseEntity<Void> createNote(@Valid @RequestBody CreateNoteRequest request) throws Exception {
     var location = new URI("api/v1/notes/" + noteService.createNote(request));
     return ResponseEntity.created(location).build();

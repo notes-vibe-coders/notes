@@ -37,6 +37,9 @@ public class UserService {
     }
 
     if (!accessControlService.userHasAccessTo(userToBeDeletedOptional.get(), Action.WRITE)) {
+      /*
+      TODO: this exception does not have assigned HTTP return code
+       */
       throw new UnauthorizedUserAccessException(
           "You are not allowed to modify user " + request.getId());
     }
