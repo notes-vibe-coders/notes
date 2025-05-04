@@ -1,4 +1,10 @@
 package pl.edu.uj.notes.authentication;
+/*
+TODO
+authentication, authorization and user packages seem to be coupled,
+there is even a circular dependency.
+maybe some refactoring would be valuable?
+ */
 
 import java.util.Collection;
 import java.util.List;
