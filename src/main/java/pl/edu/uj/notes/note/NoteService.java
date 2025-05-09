@@ -1,11 +1,10 @@
 package pl.edu.uj.notes.note;
 
 import jakarta.transaction.Transactional;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
@@ -61,19 +60,25 @@ public class NoteService {
         note.getUpdatedAt());
   }
 
-  public List<NoteDTO> getAllNotes() {
-    Map<Note, NoteSnapshot> noteSnapshotMap =
-        noteRepository.findAll().stream()
-            .collect(
-                Collectors.toMap(
-                    Function.identity(),
-                    note ->
-                        noteSnapshotRepository
-                            .findFirstByNoteIdOrderByCreatedAtDesc(note)
-                            .orElseThrow(
-                                () ->
-                                    new NoteSnapshotNotFoundException(
-                                        "Note snapshot not found for note: " + note.getId()))));
+  public List<NoteDTO> getAllNotes(String title, String content) {
+    title = title == null ? "" : title;
+    content = content == null ? "" : content;
+
+    List<Note> notes = noteRepository.findAllByTitleContainingIgnoreCase(title);
+
+    Map<Note, NoteSnapshot> noteSnapshotMap = new HashMap<>();
+    for (Note note : notes) {
+      NoteSnapshot noteSnapshot =
+          noteSnapshotRepository
+              .findFirstByNoteIdOrderByCreatedAtDesc(note)
+              .orElseThrow(
+                  () ->
+                      new NoteSnapshotNotFoundException(
+                          "Note snapshot not found for note: " + note.getId()));
+      if (noteSnapshot.getContent().toLowerCase().contains(content.toLowerCase())) {
+        noteSnapshotMap.put(note, noteSnapshot);
+      }
+    }
 
     return noteSnapshotMap.entrySet().stream()
         .map(

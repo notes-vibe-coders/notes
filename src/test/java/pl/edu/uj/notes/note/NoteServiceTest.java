@@ -112,13 +112,14 @@ class NoteServiceTest {
 
     @Test
     void getAllNotes_thenReturnAllNotes() {
-      when(noteRepository.findAll()).thenReturn(List.of(note));
+      when(noteRepository.findAllByTitleContainingIgnoreCase("")).thenReturn(List.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
+      when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
-      List<NoteDTO> response = underTest.getAllNotes();
+      List<NoteDTO> response = underTest.getAllNotes(null, null);
 
-      verify(noteRepository, times(1)).findAll();
+      verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase("");
       verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
 
       assertEquals(1, response.size());
@@ -131,6 +132,30 @@ class NoteServiceTest {
               noteSnapshot.getContent(),
               note.getCreatedAt(),
               note.getUpdatedAt());
+    }
+
+    @Test
+    void getAllNotesContainingTitleAndContent_thenReturnAllNotes() {
+      when(noteRepository.findAllByTitleContainingIgnoreCase(TITLE)).thenReturn(List.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+              .thenReturn(Optional.of(noteSnapshot));
+      when(noteSnapshot.getContent()).thenReturn(CONTENT);
+
+      List<NoteDTO> response = underTest.getAllNotes(TITLE, CONTENT);
+
+      verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase(TITLE);
+      verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
+
+      assertEquals(1, response.size());
+      assertThat(response.getFirst())
+              .extracting(
+                      NoteDTO::id, NoteDTO::title, NoteDTO::content, NoteDTO::createdAt, NoteDTO::updatedAt)
+              .containsExactly(
+                      note.getId(),
+                      note.getTitle(),
+                      noteSnapshot.getContent(),
+                      note.getCreatedAt(),
+                      note.getUpdatedAt());
     }
   }
 
