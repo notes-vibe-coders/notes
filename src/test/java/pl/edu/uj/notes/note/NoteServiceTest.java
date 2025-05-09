@@ -138,7 +138,7 @@ class NoteServiceTest {
     void getAllNotesContainingTitleAndContent_thenReturnAllNotes() {
       when(noteRepository.findAllByTitleContainingIgnoreCase(TITLE)).thenReturn(List.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
-              .thenReturn(Optional.of(noteSnapshot));
+          .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
       List<NoteDTO> response = underTest.getAllNotes(TITLE, CONTENT);
@@ -148,14 +148,14 @@ class NoteServiceTest {
 
       assertEquals(1, response.size());
       assertThat(response.getFirst())
-              .extracting(
-                      NoteDTO::id, NoteDTO::title, NoteDTO::content, NoteDTO::createdAt, NoteDTO::updatedAt)
-              .containsExactly(
-                      note.getId(),
-                      note.getTitle(),
-                      noteSnapshot.getContent(),
-                      note.getCreatedAt(),
-                      note.getUpdatedAt());
+          .extracting(
+              NoteDTO::id, NoteDTO::title, NoteDTO::content, NoteDTO::createdAt, NoteDTO::updatedAt)
+          .containsExactly(
+              note.getId(),
+              note.getTitle(),
+              noteSnapshot.getContent(),
+              note.getCreatedAt(),
+              note.getUpdatedAt());
     }
   }
 
