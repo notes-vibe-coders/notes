@@ -31,8 +31,10 @@ class NoteController {
 
   @GetMapping()
   @ResponseStatus(HttpStatus.OK)
-  ResponseEntity<List<NoteDTO>> getAllNotes() {
-    return ResponseEntity.ok(noteService.getAllNotes());
+  ResponseEntity<List<NoteDTO>> getAllNotes(
+      @RequestParam(required = false) String title,
+      @RequestParam(required = false) String content) {
+    return ResponseEntity.ok(noteService.getAllNotes(title, content));
   }
 
   @DeleteMapping
