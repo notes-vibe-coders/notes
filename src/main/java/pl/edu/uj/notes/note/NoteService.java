@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
@@ -90,5 +91,32 @@ public class NoteService {
                     entry.getKey().getCreatedAt(),
                     entry.getKey().getUpdatedAt()))
         .toList();
+  }
+
+  NoteDTO updateNote(String id, CreateNoteRequest request) {
+    Optional<Note> currentNoteOptional = noteRepository.findById(id);
+    if (currentNoteOptional.isEmpty() || !currentNoteOptional.get().isActive()) {
+      throw new NoteNotFoundException("Note not found");
+    }
+
+    Note note = currentNoteOptional.get();
+    if (!StringUtils.equals(note.getTitle(), request.title())) {
+      note.setTitle(request.title());
+      note = noteRepository.save(note);
+    }
+
+    Optional<NoteSnapshot> latestSnapshotOptional =
+        noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note);
+    NoteSnapshot latestSnapshot;
+
+    if (latestSnapshotOptional.isEmpty()
+        || !StringUtils.equals(latestSnapshotOptional.get().getContent(), request.content())) {
+      NoteSnapshot newSnapshot = new NoteSnapshot(note, request.content());
+      latestSnapshot = noteSnapshotRepository.save(newSnapshot);
+    } else {
+      latestSnapshot = latestSnapshotOptional.get();
+    }
+
+    return new NoteDTO(note, latestSnapshot);
   }
 }
