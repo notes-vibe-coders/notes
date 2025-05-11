@@ -15,6 +15,10 @@ class UserController {
   @PostMapping()
   ResponseEntity<String> createUser(@Valid @RequestBody CreateUserRequest request) {
     var id = userService.createUser(request);
+    /*
+    TODO
+    I wonder what is the purpose of returning the URL - canonical REST requires id.
+     */
     URI location = URI.create("/api/v1/user/" + id);
     return ResponseEntity.created(location).build();
   }
