@@ -42,6 +42,16 @@ public class NoteService {
     }
   }
 
+  @Transactional
+  public void markAsImportant(String id) {
+    Note note =
+        noteRepository
+            .findById(id)
+            .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
+    note.setImportant(true);
+    noteRepository.save(note);
+  }
+
   public NoteDTO getNote(String id) {
     Note note =
         noteRepository
@@ -58,7 +68,8 @@ public class NoteService {
         note.getTitle(),
         recentMostSnapshot.getContent(),
         note.getCreatedAt(),
-        note.getUpdatedAt());
+        note.getUpdatedAt(),
+        note.isImportant());
   }
 
   public List<NoteDTO> getAllNotes(String title, String content) {
@@ -89,7 +100,8 @@ public class NoteService {
                     entry.getKey().getTitle(),
                     entry.getValue().getContent(),
                     entry.getKey().getCreatedAt(),
-                    entry.getKey().getUpdatedAt()))
+                    entry.getKey().getUpdatedAt(),
+                    entry.getKey().isImportant()))
         .toList();
   }
 
