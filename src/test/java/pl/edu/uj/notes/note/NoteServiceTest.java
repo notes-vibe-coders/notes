@@ -197,7 +197,12 @@ class NoteServiceTest {
 
     Note TEST_NOTE =
         new Note(
-            ID, TITLE, Instant.now().minus(10, MINUTES), Instant.now().minus(5, MINUTES), true);
+            ID,
+            TITLE,
+            Instant.now().minus(10, MINUTES),
+            Instant.now().minus(5, MINUTES),
+            true,
+            false);
     NoteSnapshot TEST_SNAPSHOT =
         new NoteSnapshot(
             ID,
@@ -240,7 +245,9 @@ class NoteServiceTest {
       var result = underTest.updateNote(ID, updateRequest);
 
       assertThat(result)
-          .isEqualTo(new NoteDTO(ID, newTile, CONTENT, TEST_NOTE.getCreatedAt(), now));
+          .isEqualTo(
+              new NoteDTO(
+                  ID, newTile, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
 
       verify(noteRepository).save(captor.capture());
 
@@ -260,7 +267,12 @@ class NoteServiceTest {
       assertThat(result)
           .isEqualTo(
               new NoteDTO(
-                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), TEST_SNAPSHOT.getUpdatedAt()));
+                  ID,
+                  TITLE,
+                  CONTENT,
+                  TEST_NOTE.getCreatedAt(),
+                  TEST_SNAPSHOT.getUpdatedAt(),
+                  TEST_NOTE.isImportant()));
 
       verify(noteRepository, never()).save(any());
     }
@@ -277,7 +289,10 @@ class NoteServiceTest {
 
       var result = underTest.updateNote(ID, updateRequest);
 
-      assertThat(result).isEqualTo(new NoteDTO(ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now));
+      assertThat(result)
+          .isEqualTo(
+              new NoteDTO(
+                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
 
       verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, CONTENT));
     }
@@ -296,7 +311,10 @@ class NoteServiceTest {
 
       var result = underTest.updateNote(ID, updateRequest);
 
-      assertThat(result).isEqualTo(new NoteDTO(ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now));
+      assertThat(result)
+          .isEqualTo(
+              new NoteDTO(
+                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
 
       verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, newContent));
     }
@@ -314,9 +332,36 @@ class NoteServiceTest {
       assertThat(result)
           .isEqualTo(
               new NoteDTO(
-                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), TEST_SNAPSHOT.getUpdatedAt()));
+                  ID,
+                  TITLE,
+                  CONTENT,
+                  TEST_NOTE.getCreatedAt(),
+                  TEST_SNAPSHOT.getUpdatedAt(),
+                  TEST_NOTE.isImportant()));
 
       verify(noteSnapshotRepository, never()).save(any());
+    }
+  }
+
+  @Nested
+  class markAsImportant {
+
+    @Test
+    void noteDoesNotExist_throwsException() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.empty());
+
+      assertThrows(NoteNotFoundException.class, () -> underTest.markAsImportant(NOTE_ID));
+    }
+
+    @Test
+    void noteExists_marksAsImportantAndSaves() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteRepository.save(any())).thenReturn(note);
+
+      underTest.markAsImportant(NOTE_ID);
+
+      verify(note).setImportant(true);
+      verify(noteRepository).save(note);
     }
   }
 }

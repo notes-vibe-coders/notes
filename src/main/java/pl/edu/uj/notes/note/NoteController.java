@@ -51,4 +51,11 @@ class NoteController {
       @PathVariable @NotBlank String id, @Validated @RequestBody CreateNoteRequest request) {
     return ResponseEntity.accepted().body(noteService.updateNote(id, request));
   }
+
+  @PatchMapping("/{id}/important")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  ResponseEntity<Void> markAsImportant(@PathVariable @NotBlank String id) {
+    noteService.markAsImportant(id);
+    return ResponseEntity.noContent().build();
+  }
 }

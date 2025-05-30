@@ -4,7 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 
 public record NoteDTO(
-    String id, String title, String content, Instant createdAt, Instant updatedAt) {
+    String id,
+    String title,
+    String content,
+    Instant createdAt,
+    Instant updatedAt,
+    boolean important) {
 
   public NoteDTO(Note note, NoteSnapshot snapshot) {
     this(
@@ -12,7 +17,8 @@ public record NoteDTO(
         note.getTitle(),
         snapshot.getContent(),
         note.getCreatedAt(),
-        getUpdatedAt(note, snapshot));
+        getUpdatedAt(note, snapshot),
+        note.isImportant());
   }
 
   @JsonIgnore
