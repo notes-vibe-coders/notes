@@ -1,10 +1,7 @@
 package pl.edu.uj.notes.note;
 
 import jakarta.transaction.Transactional;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -42,16 +39,12 @@ public class NoteService {
     }
   }
 
-  public NoteDTO getNote(String id) {
+  NoteDTO getNote(String id) {
     Note note =
         noteRepository
             .findById(id)
             .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
-    NoteSnapshot recentMostSnapshot =
-        noteSnapshotRepository
-            .findFirstByNoteIdOrderByCreatedAtDesc(note)
-            .orElseThrow(
-                () -> new NoteSnapshotNotFoundException("Note snapshot not found for note: " + id));
+    NoteSnapshot recentMostSnapshot = getNoteSnapshot(note);
 
     return new NoteDTO(
         note.getId(),
@@ -61,7 +54,16 @@ public class NoteService {
         note.getUpdatedAt());
   }
 
-  public List<NoteDTO> getAllNotes(String title, String content) {
+  private NoteSnapshot getNoteSnapshot(Note note) {
+    return noteSnapshotRepository
+        .findFirstByNoteIdOrderByCreatedAtDesc(note)
+        .orElseThrow(
+            () ->
+                new NoteSnapshotNotFoundException(
+                    "Note snapshot not found for note: " + note.getId()));
+  }
+
+  List<NoteDTO> getAllNotes(String title, String content) {
     title = title == null ? "" : title;
     content = content == null ? "" : content;
 
@@ -69,13 +71,7 @@ public class NoteService {
 
     Map<Note, NoteSnapshot> noteSnapshotMap = new HashMap<>();
     for (Note note : notes) {
-      NoteSnapshot noteSnapshot =
-          noteSnapshotRepository
-              .findFirstByNoteIdOrderByCreatedAtDesc(note)
-              .orElseThrow(
-                  () ->
-                      new NoteSnapshotNotFoundException(
-                          "Note snapshot not found for note: " + note.getId()));
+      NoteSnapshot noteSnapshot = getNoteSnapshot(note);
       if (noteSnapshot.getContent().toLowerCase().contains(content.toLowerCase())) {
         noteSnapshotMap.put(note, noteSnapshot);
       }
@@ -118,5 +114,24 @@ public class NoteService {
     }
 
     return new NoteDTO(note, latestSnapshot);
+  }
+
+  public List<NoteDTO> getNoteDTOs(List<Note> notes) {
+    List<NoteDTO> noteDTOs = new ArrayList<>();
+    for (Note note : notes) {
+      NoteSnapshot noteSnapshot = getNoteSnapshot(note);
+      noteDTOs.add(
+          new NoteDTO(
+              note.getId(),
+              note.getTitle(),
+              noteSnapshot.getContent(),
+              note.getCreatedAt(),
+              note.getUpdatedAt()));
+    }
+    return noteDTOs;
+  }
+
+  public List<Note> getNotes(List<String> noteIds) {
+    return noteRepository.findAllById(noteIds);
   }
 }
