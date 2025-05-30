@@ -42,7 +42,6 @@ public class NoteService {
     }
   }
 
-  @Transactional
   public void markAsImportant(String id) {
     Note note =
         noteRepository
