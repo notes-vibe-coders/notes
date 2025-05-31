@@ -165,6 +165,7 @@ class NoteServiceTest {
     void getAllImportantNotes_thenReturnAllNotes() {
       Note importantNote = mock(Note.class);
       when(importantNote.isImportant()).thenReturn(true);
+      when(importantNote.getId()).thenReturn("importantId");
 
       Note notImportantNote = mock(Note.class);
       when(notImportantNote.isImportant()).thenReturn(false);
