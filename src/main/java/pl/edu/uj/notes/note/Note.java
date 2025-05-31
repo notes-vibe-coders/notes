@@ -36,6 +36,8 @@ public class Note {
 
   private boolean important = false;
 
+  private boolean archivized = false;
+
   public Note(String title) {
     this.title = title;
   }

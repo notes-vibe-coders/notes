@@ -19,6 +19,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.edu.uj.notes.note.exception.NoteIsArchivizedException;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
@@ -105,6 +106,14 @@ class NoteServiceTest {
     }
 
     @Test
+    void getNoteById_thenNoteIsArchivized() {
+      var archivizedNote = new Note().withId(NOTE_ID).withArchivized(true);
+      when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(archivizedNote));
+
+      assertThrows(NoteIsArchivizedException.class, () -> underTest.getNote(NOTE_ID));
+    }
+
+    @Test
     void getNoteById_thenNoteSnapshotNotFound() {
       when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
@@ -165,9 +174,10 @@ class NoteServiceTest {
 
     @Test
     void getAllImportantNotes_thenReturnAllNotes() {
-      Note importantNote = new Note("id1", "Important", Instant.now(), Instant.now(), true, true);
+      Note importantNote =
+          new Note("id1", "Important", Instant.now(), Instant.now(), true, true, false);
       Note notImportantNote =
-          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false);
+          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, false);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
       when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
@@ -184,6 +194,20 @@ class NoteServiceTest {
       assertThat(result.getFirst().important()).isTrue();
       verify(noteRepository).findAllByTitleContainingIgnoreCaseAndActive("", true);
     }
+
+    @Test
+    void getAllArchivizedNotes_thenThrowException() {
+      Note importantNote =
+              new Note("id1", "Important", Instant.now(), Instant.now(), true, true, true);
+      Note notImportantNote =
+              new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, true);
+
+      List<Note> allNotes = List.of(importantNote, notImportantNote);
+      when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
+              .thenReturn(allNotes);
+
+      assertThrows(NoteIsArchivizedException.class, () -> underTest.getAllNotes(null, null, true));
+    }
   }
 
   @Nested
@@ -197,7 +221,6 @@ class NoteServiceTest {
 
       underTest.deleteNote(deleteNoteRequest);
 
-      verify(note).setActive(false);
       verify(noteRepository).save(note);
 
       assertThat(note.isActive()).isFalse();
@@ -226,6 +249,7 @@ class NoteServiceTest {
             Instant.now().minus(10, MINUTES),
             Instant.now().minus(5, MINUTES),
             true,
+            false,
             false);
     NoteSnapshot TEST_SNAPSHOT =
         new NoteSnapshot(
@@ -255,6 +279,17 @@ class NoteServiceTest {
     }
 
     @Test
+    void noteArchivized_throwsNoteIsArchivizedException() {
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var note = TEST_NOTE.withArchivized(true);
+
+      when(noteRepository.findById(any())).thenReturn(Optional.of(note));
+
+      assertThatCode(() -> underTest.updateNote(ID, updateRequest))
+              .isExactlyInstanceOf(NoteIsArchivizedException.class);
+    }
+
+    @Test
     void titleUpdated(@Captor ArgumentCaptor<Note> captor) {
       var newTile = TITLE + "new";
       var now = Instant.now();
@@ -271,7 +306,13 @@ class NoteServiceTest {
       assertThat(result)
           .isEqualTo(
               new NoteDTO(
-                  ID, newTile, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
+                  ID,
+                  newTile,
+                  CONTENT,
+                  TEST_NOTE.getCreatedAt(),
+                  now,
+                  TEST_NOTE.isImportant(),
+                  false));
 
       verify(noteRepository).save(captor.capture());
 
@@ -296,7 +337,8 @@ class NoteServiceTest {
                   CONTENT,
                   TEST_NOTE.getCreatedAt(),
                   TEST_SNAPSHOT.getUpdatedAt(),
-                  TEST_NOTE.isImportant()));
+                  TEST_NOTE.isImportant(),
+                  false));
 
       verify(noteRepository, never()).save(any());
     }
@@ -316,7 +358,13 @@ class NoteServiceTest {
       assertThat(result)
           .isEqualTo(
               new NoteDTO(
-                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
+                  ID,
+                  TITLE,
+                  CONTENT,
+                  TEST_NOTE.getCreatedAt(),
+                  now,
+                  TEST_NOTE.isImportant(),
+                  false));
 
       verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, CONTENT));
     }
@@ -338,7 +386,13 @@ class NoteServiceTest {
       assertThat(result)
           .isEqualTo(
               new NoteDTO(
-                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
+                  ID,
+                  TITLE,
+                  CONTENT,
+                  TEST_NOTE.getCreatedAt(),
+                  now,
+                  TEST_NOTE.isImportant(),
+                  false));
 
       verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, newContent));
     }
@@ -361,7 +415,8 @@ class NoteServiceTest {
                   CONTENT,
                   TEST_NOTE.getCreatedAt(),
                   TEST_SNAPSHOT.getUpdatedAt(),
-                  TEST_NOTE.isImportant()));
+                  TEST_NOTE.isImportant(),
+                  false));
 
       verify(noteSnapshotRepository, never()).save(any());
     }
@@ -385,6 +440,35 @@ class NoteServiceTest {
       underTest.markAsImportant(NOTE_ID);
 
       verify(note).setImportant(true);
+      verify(noteRepository).save(note);
+    }
+
+    @Test
+    void noteExists_isArchivized_throwsException() {
+      var archivizedNote = new Note().withArchivized(true).withId(NOTE_ID);
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(archivizedNote));
+
+      assertThrows(NoteIsArchivizedException.class, () -> underTest.markAsImportant(NOTE_ID));}
+  }
+
+  @Nested
+  class markAsArchivized {
+
+    @Test
+    void noteDoesNotExist_throwsException() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.empty());
+
+      assertThrows(NoteNotFoundException.class, () -> underTest.markAsArchivized(NOTE_ID));
+    }
+
+    @Test
+    void noteExists_marksAsArchivizedAndSaves() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteRepository.save(any())).thenReturn(note);
+
+      underTest.markAsArchivized(NOTE_ID);
+
+      verify(note).setArchivized(true);
       verify(noteRepository).save(note);
     }
   }
