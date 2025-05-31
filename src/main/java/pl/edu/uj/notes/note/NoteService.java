@@ -37,7 +37,7 @@ public class NoteService {
 
     if (noteOptional.isEmpty()) {
       throw new NoteNotFoundException("Note with ID " + id + " does not exist");
-    } else if (noteOptional.get().isArchivized()) {
+    } else if (noteOptional.get().isArchived()) {
       throw new NoteIsArchivizedException("Note with ID " + id + " is archivized");
     } else {
       Note note = noteOptional.get();
@@ -51,19 +51,19 @@ public class NoteService {
         noteRepository
             .findById(id)
             .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
-    if (note.isArchivized()) {
+    if (note.isArchived()) {
       throw new NoteIsArchivizedException("Note with ID " + id + " is archivized");
     }
     note.setImportant(true);
     noteRepository.save(note);
   }
 
-  public void markAsArchivized(String id) {
+  public void markAsArchived(String id) {
     Note note =
             noteRepository
                     .findById(id)
                     .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
-    note.setArchivized(true);
+    note.setArchived(true);
     noteRepository.save(note);
   }
 
@@ -73,7 +73,7 @@ public class NoteService {
             .findByActiveAndId(true, id)
             .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
 
-    if (note.isArchivized()) {
+    if (note.isArchived()) {
       throw new NoteIsArchivizedException("Note with ID " + id + " is archivized");
     }
 
@@ -86,11 +86,11 @@ public class NoteService {
         note.getCreatedAt(),
         note.getUpdatedAt(),
         note.isImportant(),
-        note.isArchivized());
+        note.isArchived());
   }
 
   private NoteSnapshot getNoteSnapshot(Note note) {
-    if (note.isArchivized()) {
+    if (note.isArchived()) {
       throw new NoteIsArchivizedException("Note with ID " + note.getId() + " is archivized");
 
     }
@@ -109,7 +109,7 @@ public class NoteService {
 
     List<Note> notes = noteRepository.findAllByTitleContainingIgnoreCaseAndActive(title, true);
 
-    if (notes.stream().anyMatch(Note::isArchivized)) {
+    if (notes.stream().anyMatch(Note::isArchived)) {
       throw new NoteIsArchivizedException("At least one note is archivized");
     }
 
@@ -141,7 +141,7 @@ public class NoteService {
                     entry.getKey().getCreatedAt(),
                     entry.getKey().getUpdatedAt(),
                     entry.getKey().isImportant(),
-                    entry.getKey().isArchivized()))
+                    entry.getKey().isArchived()))
         .toList();
   }
 
@@ -150,7 +150,7 @@ public class NoteService {
     if (currentNoteOptional.isEmpty() || !currentNoteOptional.get().isActive()) {
       throw new NoteNotFoundException("Note not found");
     }
-    if (currentNoteOptional.get().isArchivized()) {
+    if (currentNoteOptional.get().isArchived()) {
       throw new NoteIsArchivizedException("Note with ID " + id + " is archivized");
     }
 
@@ -178,7 +178,7 @@ public class NoteService {
   public List<NoteDTO> getNoteDTOs(List<Note> notes) {
     List<NoteDTO> noteDTOs = new ArrayList<>();
     for (Note note : notes) {
-      if (note.isArchivized()) {
+      if (note.isArchived()) {
         throw new NoteIsArchivizedException("Note with ID " + note.getId() + " is archivized");
       }
       NoteSnapshot noteSnapshot = getNoteSnapshot(note);
@@ -190,7 +190,7 @@ public class NoteService {
               note.getCreatedAt(),
               note.getUpdatedAt(),
               note.isImportant(),
-              note.isArchivized()));
+              note.isArchived()));
     }
     return noteDTOs;
   }
@@ -198,7 +198,7 @@ public class NoteService {
   public List<Note> getNotes(List<String> noteIds) {
     return noteRepository.findAllById(noteIds).stream()
             .peek(note -> {
-              if (note.isArchivized()) {
+              if (note.isArchived()) {
                 throw new NoteIsArchivizedException("Note with ID " + note.getId() + " is archivized");
               }
             }).toList();

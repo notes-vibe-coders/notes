@@ -20,7 +20,7 @@ public record NoteDTO(
         note.getCreatedAt(),
         getUpdatedAt(note, snapshot),
         note.isImportant(),
-        note.isArchivized());
+        note.isArchived());
   }
 
   @JsonIgnore

@@ -60,10 +60,10 @@ class NoteController {
     return ResponseEntity.noContent().build();
   }
 
-  @PatchMapping("/{id}/archivized")
+  @PatchMapping("/{id}/archive")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  ResponseEntity<Void> markAsArchivized(@PathVariable @NotBlank String id) {
-    noteService.markAsArchivized(id);
+  ResponseEntity<Void> markAsArchived(@PathVariable @NotBlank String id) {
+    noteService.markAsArchived(id);
     return ResponseEntity.noContent().build();
   }
 }

@@ -107,7 +107,7 @@ class NoteServiceTest {
 
     @Test
     void getNoteById_thenNoteIsArchivized() {
-      var archivizedNote = new Note().withId(NOTE_ID).withArchivized(true);
+      var archivizedNote = new Note().withId(NOTE_ID).withArchived(true);
       when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(archivizedNote));
 
       assertThrows(NoteIsArchivizedException.class, () -> underTest.getNote(NOTE_ID));
@@ -281,7 +281,7 @@ class NoteServiceTest {
     @Test
     void noteArchivized_throwsNoteIsArchivizedException() {
       var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
-      var note = TEST_NOTE.withArchivized(true);
+      var note = TEST_NOTE.withArchived(true);
 
       when(noteRepository.findById(any())).thenReturn(Optional.of(note));
 
@@ -445,7 +445,7 @@ class NoteServiceTest {
 
     @Test
     void noteExists_isArchivized_throwsException() {
-      var archivizedNote = new Note().withArchivized(true).withId(NOTE_ID);
+      var archivizedNote = new Note().withArchived(true).withId(NOTE_ID);
       when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(archivizedNote));
 
       assertThrows(NoteIsArchivizedException.class, () -> underTest.markAsImportant(NOTE_ID));}
@@ -458,7 +458,7 @@ class NoteServiceTest {
     void noteDoesNotExist_throwsException() {
       when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.empty());
 
-      assertThrows(NoteNotFoundException.class, () -> underTest.markAsArchivized(NOTE_ID));
+      assertThrows(NoteNotFoundException.class, () -> underTest.markAsArchived(NOTE_ID));
     }
 
     @Test
@@ -466,9 +466,9 @@ class NoteServiceTest {
       when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
       when(noteRepository.save(any())).thenReturn(note);
 
-      underTest.markAsArchivized(NOTE_ID);
+      underTest.markAsArchived(NOTE_ID);
 
-      verify(note).setArchivized(true);
+      verify(note).setArchived(true);
       verify(noteRepository).save(note);
     }
   }
