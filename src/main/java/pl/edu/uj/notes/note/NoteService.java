@@ -1,7 +1,11 @@
 package pl.edu.uj.notes.note;
 
 import jakarta.transaction.Transactional;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -73,11 +77,16 @@ public class NoteService {
                     "Note snapshot not found for note: " + note.getId()));
   }
 
-  List<NoteDTO> getAllNotes(String title, String content) {
+  public List<NoteDTO> getAllNotes(String title, String content, Boolean important) {
     title = title == null ? "" : title;
     content = content == null ? "" : content;
+    important = important != null && important;
 
     List<Note> notes = noteRepository.findAllByTitleContainingIgnoreCase(title);
+
+    if (important) {
+      notes = notes.stream().filter(Note::isImportant).toList();
+    }
 
     Map<Note, NoteSnapshot> noteSnapshotMap = new HashMap<>();
     for (Note note : notes) {
