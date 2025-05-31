@@ -60,10 +60,10 @@ class NoteController {
     return ResponseEntity.noContent().build();
   }
 
-  @PatchMapping("/{id}/undeletable")
+  @PatchMapping("/{id}/archivized")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  ResponseEntity<Void> markAsUndeletable(@PathVariable @NotBlank String id) {
-    noteService.markAsUndeletable(id);
+  ResponseEntity<Void> markAsArchivized(@PathVariable @NotBlank String id) {
+    noteService.markAsArchivized(id);
     return ResponseEntity.noContent().build();
   }
 }

@@ -10,7 +10,7 @@ public record NoteDTO(
     Instant createdAt,
     Instant updatedAt,
     boolean important,
-    boolean deletable) {
+    boolean archivized) {
 
   public NoteDTO(Note note, NoteSnapshot snapshot) {
     this(
@@ -20,7 +20,7 @@ public record NoteDTO(
         note.getCreatedAt(),
         getUpdatedAt(note, snapshot),
         note.isImportant(),
-        note.isDeletable());
+        note.isArchivized());
   }
 
   @JsonIgnore

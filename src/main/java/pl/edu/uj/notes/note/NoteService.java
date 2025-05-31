@@ -9,7 +9,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
-import pl.edu.uj.notes.note.exception.NoteCannotBeDeletedException;
+import pl.edu.uj.notes.note.exception.NoteIsArchivizedException;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
@@ -37,8 +37,8 @@ public class NoteService {
 
     if (noteOptional.isEmpty()) {
       throw new NoteNotFoundException("Note with ID " + id + " does not exist");
-    } else if (!noteOptional.get().isDeletable()) {
-      throw new NoteCannotBeDeletedException("Note with ID " + id + " cannot be deleted");
+    } else if (noteOptional.get().isArchivized()) {
+      throw new NoteIsArchivizedException("Note with ID " + id + " is archivized");
     } else {
       Note note = noteOptional.get();
       note.setActive(false);
@@ -51,16 +51,19 @@ public class NoteService {
         noteRepository
             .findById(id)
             .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
+    if (note.isArchivized()) {
+      throw new NoteIsArchivizedException("Note with ID " + id + " is archivized");
+    }
     note.setImportant(true);
     noteRepository.save(note);
   }
 
-  public void markAsUndeletable(String id) {
+  public void markAsArchivized(String id) {
     Note note =
-        noteRepository
-            .findById(id)
-            .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
-    note.setDeletable(false);
+            noteRepository
+                    .findById(id)
+                    .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
+    note.setArchivized(true);
     noteRepository.save(note);
   }
 
@@ -69,6 +72,11 @@ public class NoteService {
         noteRepository
             .findByActiveAndId(true, id)
             .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
+
+    if (note.isArchivized()) {
+      throw new NoteIsArchivizedException("Note with ID " + id + " is archivized");
+    }
+
     NoteSnapshot recentMostSnapshot = getNoteSnapshot(note);
 
     return new NoteDTO(
@@ -78,10 +86,14 @@ public class NoteService {
         note.getCreatedAt(),
         note.getUpdatedAt(),
         note.isImportant(),
-        note.isDeletable());
+        note.isArchivized());
   }
 
   private NoteSnapshot getNoteSnapshot(Note note) {
+    if (note.isArchivized()) {
+      throw new NoteIsArchivizedException("Note with ID " + note.getId() + " is archivized");
+
+    }
     return noteSnapshotRepository
         .findFirstByNoteIdOrderByCreatedAtDesc(note)
         .orElseThrow(
@@ -96,6 +108,10 @@ public class NoteService {
     important = important != null && important;
 
     List<Note> notes = noteRepository.findAllByTitleContainingIgnoreCaseAndActive(title, true);
+
+    if (notes.stream().anyMatch(Note::isArchivized)) {
+      throw new NoteIsArchivizedException("At least one note is archivized");
+    }
 
     if (important) {
       notes = notes.stream().filter(Note::isImportant).toList();
@@ -125,7 +141,7 @@ public class NoteService {
                     entry.getKey().getCreatedAt(),
                     entry.getKey().getUpdatedAt(),
                     entry.getKey().isImportant(),
-                    entry.getKey().isDeletable()))
+                    entry.getKey().isArchivized()))
         .toList();
   }
 
@@ -133,6 +149,9 @@ public class NoteService {
     Optional<Note> currentNoteOptional = noteRepository.findById(id);
     if (currentNoteOptional.isEmpty() || !currentNoteOptional.get().isActive()) {
       throw new NoteNotFoundException("Note not found");
+    }
+    if (currentNoteOptional.get().isArchivized()) {
+      throw new NoteIsArchivizedException("Note with ID " + id + " is archivized");
     }
 
     Note note = currentNoteOptional.get();
@@ -159,6 +178,9 @@ public class NoteService {
   public List<NoteDTO> getNoteDTOs(List<Note> notes) {
     List<NoteDTO> noteDTOs = new ArrayList<>();
     for (Note note : notes) {
+      if (note.isArchivized()) {
+        throw new NoteIsArchivizedException("Note with ID " + note.getId() + " is archivized");
+      }
       NoteSnapshot noteSnapshot = getNoteSnapshot(note);
       noteDTOs.add(
           new NoteDTO(
@@ -168,12 +190,17 @@ public class NoteService {
               note.getCreatedAt(),
               note.getUpdatedAt(),
               note.isImportant(),
-              note.isDeletable()));
+              note.isArchivized()));
     }
     return noteDTOs;
   }
 
   public List<Note> getNotes(List<String> noteIds) {
-    return noteRepository.findAllById(noteIds);
+    return noteRepository.findAllById(noteIds).stream()
+            .peek(note -> {
+              if (note.isArchivized()) {
+                throw new NoteIsArchivizedException("Note with ID " + note.getId() + " is archivized");
+              }
+            }).toList();
   }
 }

@@ -36,7 +36,7 @@ public class Note {
 
   private boolean important = false;
 
-  private boolean deletable = true;
+  private boolean archivized = false;
 
   public Note(String title) {
     this.title = title;
