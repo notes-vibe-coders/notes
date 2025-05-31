@@ -19,6 +19,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.edu.uj.notes.note.exception.NoteCannotBeDeletedException;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
@@ -165,9 +166,10 @@ class NoteServiceTest {
 
     @Test
     void getAllImportantNotes_thenReturnAllNotes() {
-      Note importantNote = new Note("id1", "Important", Instant.now(), Instant.now(), true, true);
+      Note importantNote =
+          new Note("id1", "Important", Instant.now(), Instant.now(), true, true, true);
       Note notImportantNote =
-          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false);
+          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, true);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
       when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
@@ -191,14 +193,14 @@ class NoteServiceTest {
 
     @Test
     void deleteNoteDeactivatesExistingNote() {
+      var testNote = new Note().withId(ID).withDeletable(true).withActive(true);
       var deleteNoteRequest = new DeleteNoteRequest(ID);
 
-      when(noteRepository.findById(ID)).thenReturn(Optional.of(note));
+      when(noteRepository.findById(ID)).thenReturn(Optional.of(testNote));
 
       underTest.deleteNote(deleteNoteRequest);
 
-      verify(note).setActive(false);
-      verify(noteRepository).save(note);
+      verify(noteRepository).save(testNote);
 
       assertThat(note.isActive()).isFalse();
     }
@@ -214,6 +216,20 @@ class NoteServiceTest {
 
       assertThat(e.getMessage()).isEqualTo("Note with ID " + ID + " does not exist");
     }
+
+    @Test
+    void deleteNoteThrowsExceptionWhenNoteIsNotDeletable() {
+      note.setDeletable(false);
+      var deleteNoteRequest = new DeleteNoteRequest(ID);
+
+      when(noteRepository.findById(ID)).thenReturn(Optional.of(note));
+
+      NoteCannotBeDeletedException e =
+          assertThrows(
+              NoteCannotBeDeletedException.class, () -> underTest.deleteNote(deleteNoteRequest));
+
+      assertThat(e.getMessage()).isEqualTo("Note with ID " + ID + " cannot be deleted");
+    }
   }
 
   @Nested
@@ -226,7 +242,8 @@ class NoteServiceTest {
             Instant.now().minus(10, MINUTES),
             Instant.now().minus(5, MINUTES),
             true,
-            false);
+            false,
+            true);
     NoteSnapshot TEST_SNAPSHOT =
         new NoteSnapshot(
             ID,
@@ -271,7 +288,13 @@ class NoteServiceTest {
       assertThat(result)
           .isEqualTo(
               new NoteDTO(
-                  ID, newTile, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
+                  ID,
+                  newTile,
+                  CONTENT,
+                  TEST_NOTE.getCreatedAt(),
+                  now,
+                  TEST_NOTE.isImportant(),
+                  true));
 
       verify(noteRepository).save(captor.capture());
 
@@ -296,7 +319,8 @@ class NoteServiceTest {
                   CONTENT,
                   TEST_NOTE.getCreatedAt(),
                   TEST_SNAPSHOT.getUpdatedAt(),
-                  TEST_NOTE.isImportant()));
+                  TEST_NOTE.isImportant(),
+                  true));
 
       verify(noteRepository, never()).save(any());
     }
@@ -316,7 +340,13 @@ class NoteServiceTest {
       assertThat(result)
           .isEqualTo(
               new NoteDTO(
-                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
+                  ID,
+                  TITLE,
+                  CONTENT,
+                  TEST_NOTE.getCreatedAt(),
+                  now,
+                  TEST_NOTE.isImportant(),
+                  true));
 
       verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, CONTENT));
     }
@@ -338,7 +368,13 @@ class NoteServiceTest {
       assertThat(result)
           .isEqualTo(
               new NoteDTO(
-                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now, TEST_NOTE.isImportant()));
+                  ID,
+                  TITLE,
+                  CONTENT,
+                  TEST_NOTE.getCreatedAt(),
+                  now,
+                  TEST_NOTE.isImportant(),
+                  true));
 
       verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, newContent));
     }
@@ -361,7 +397,8 @@ class NoteServiceTest {
                   CONTENT,
                   TEST_NOTE.getCreatedAt(),
                   TEST_SNAPSHOT.getUpdatedAt(),
-                  TEST_NOTE.isImportant()));
+                  TEST_NOTE.isImportant(),
+                  true));
 
       verify(noteSnapshotRepository, never()).save(any());
     }
@@ -385,6 +422,28 @@ class NoteServiceTest {
       underTest.markAsImportant(NOTE_ID);
 
       verify(note).setImportant(true);
+      verify(noteRepository).save(note);
+    }
+  }
+
+  @Nested
+  class markAsUndeletable {
+
+    @Test
+    void noteDoesNotExist_throwsException() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.empty());
+
+      assertThrows(NoteNotFoundException.class, () -> underTest.markAsUndeletable(NOTE_ID));
+    }
+
+    @Test
+    void noteExists_marksAsUndeletableAndSaves() {
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteRepository.save(any())).thenReturn(note);
+
+      underTest.markAsUndeletable(NOTE_ID);
+
+      verify(note).setDeletable(false);
       verify(noteRepository).save(note);
     }
   }

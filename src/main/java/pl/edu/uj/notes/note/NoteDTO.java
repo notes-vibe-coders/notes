@@ -9,7 +9,8 @@ public record NoteDTO(
     String content,
     Instant createdAt,
     Instant updatedAt,
-    boolean important) {
+    boolean important,
+    boolean deletable) {
 
   public NoteDTO(Note note, NoteSnapshot snapshot) {
     this(
@@ -18,7 +19,8 @@ public record NoteDTO(
         snapshot.getContent(),
         note.getCreatedAt(),
         getUpdatedAt(note, snapshot),
-        note.isImportant());
+        note.isImportant(),
+        note.isDeletable());
   }
 
   @JsonIgnore

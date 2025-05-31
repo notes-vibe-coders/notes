@@ -9,6 +9,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import pl.edu.uj.notes.note.exception.NoteCannotBeDeletedException;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
@@ -34,12 +35,14 @@ public class NoteService {
 
     Optional<Note> noteOptional = noteRepository.findById(id);
 
-    if (noteOptional.isPresent()) {
+    if (noteOptional.isEmpty()) {
+      throw new NoteNotFoundException("Note with ID " + id + " does not exist");
+    } else if (!noteOptional.get().isDeletable()) {
+      throw new NoteCannotBeDeletedException("Note with ID " + id + " cannot be deleted");
+    } else {
       Note note = noteOptional.get();
       note.setActive(false);
       noteRepository.save(note);
-    } else {
-      throw new NoteNotFoundException("Note with ID " + id + " does not exist");
     }
   }
 
@@ -49,6 +52,15 @@ public class NoteService {
             .findById(id)
             .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
     note.setImportant(true);
+    noteRepository.save(note);
+  }
+
+  public void markAsUndeletable(String id) {
+    Note note =
+        noteRepository
+            .findById(id)
+            .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
+    note.setDeletable(false);
     noteRepository.save(note);
   }
 
@@ -65,7 +77,8 @@ public class NoteService {
         recentMostSnapshot.getContent(),
         note.getCreatedAt(),
         note.getUpdatedAt(),
-        note.isImportant());
+        note.isImportant(),
+        note.isDeletable());
   }
 
   private NoteSnapshot getNoteSnapshot(Note note) {
@@ -111,7 +124,8 @@ public class NoteService {
                     entry.getValue().getContent(),
                     entry.getKey().getCreatedAt(),
                     entry.getKey().getUpdatedAt(),
-                    entry.getKey().isImportant()))
+                    entry.getKey().isImportant(),
+                    entry.getKey().isDeletable()))
         .toList();
   }
 
@@ -153,7 +167,8 @@ public class NoteService {
               noteSnapshot.getContent(),
               note.getCreatedAt(),
               note.getUpdatedAt(),
-              note.isImportant()));
+              note.isImportant(),
+              note.isDeletable()));
     }
     return noteDTOs;
   }

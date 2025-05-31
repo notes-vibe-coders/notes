@@ -70,4 +70,10 @@
     </addColumn>
   </changeSet>
 
+  <changeSet id="9" author="hubertp21">
+    <addColumn tableName="note">
+      <column name="deletable" type="boolean" defaultValueBoolean="true"/>
+    </addColumn>
+  </changeSet>
+
 </databaseChangeLog>

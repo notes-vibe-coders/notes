@@ -59,4 +59,11 @@ class NoteController {
     noteService.markAsImportant(id);
     return ResponseEntity.noContent().build();
   }
+
+  @PatchMapping("/{id}/undeletable")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  ResponseEntity<Void> markAsUndeletable(@PathVariable @NotBlank String id) {
+    noteService.markAsUndeletable(id);
+    return ResponseEntity.noContent().build();
+  }
 }
