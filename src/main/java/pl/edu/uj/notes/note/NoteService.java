@@ -143,7 +143,8 @@ public class NoteService {
               note.getTitle(),
               noteSnapshot.getContent(),
               note.getCreatedAt(),
-              note.getUpdatedAt()));
+              note.getUpdatedAt(),
+              note.isImportant()));
     }
     return noteDTOs;
   }
