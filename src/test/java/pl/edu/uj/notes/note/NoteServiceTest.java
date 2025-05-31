@@ -80,7 +80,7 @@ class NoteServiceTest {
 
     @Test
     void getNoteById_thenReturnNote() {
-      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
 
@@ -99,14 +99,14 @@ class NoteServiceTest {
 
     @Test
     void getNoteById_thenNoteNotFound() {
-      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.empty());
+      when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.empty());
 
       assertThrows(NoteNotFoundException.class, () -> underTest.getNote(NOTE_ID));
     }
 
     @Test
     void getNoteById_thenNoteSnapshotNotFound() {
-      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.empty());
 
@@ -115,14 +115,15 @@ class NoteServiceTest {
 
     @Test
     void getAllNotes_thenReturnAllNotes() {
-      when(noteRepository.findAllByTitleContainingIgnoreCase("")).thenReturn(List.of(note));
+      when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
+          .thenReturn(List.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
       List<NoteDTO> response = underTest.getAllNotes(null, null, null);
 
-      verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase("");
+      verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCaseAndActive("", true);
       verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
 
       assertEquals(1, response.size());
@@ -139,14 +140,15 @@ class NoteServiceTest {
 
     @Test
     void getAllNotesContainingTitleAndContent_thenReturnAllNotes() {
-      when(noteRepository.findAllByTitleContainingIgnoreCase(TITLE)).thenReturn(List.of(note));
+      when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive(TITLE, true))
+          .thenReturn(List.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
       List<NoteDTO> response = underTest.getAllNotes(TITLE, CONTENT, null);
 
-      verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase(TITLE);
+      verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCaseAndActive(TITLE, true);
       verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
 
       assertEquals(1, response.size());
@@ -168,7 +170,8 @@ class NoteServiceTest {
           new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
-      when(noteRepository.findAllByTitleContainingIgnoreCase("")).thenReturn(allNotes);
+      when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
+          .thenReturn(allNotes);
 
       NoteSnapshot snapshot = mock(NoteSnapshot.class);
       when(snapshot.getContent()).thenReturn("Snapshot content");
@@ -179,7 +182,7 @@ class NoteServiceTest {
 
       assertThat(result).hasSize(1);
       assertThat(result.getFirst().important()).isTrue();
-      verify(noteRepository).findAllByTitleContainingIgnoreCase("");
+      verify(noteRepository).findAllByTitleContainingIgnoreCaseAndActive("", true);
     }
   }
 
