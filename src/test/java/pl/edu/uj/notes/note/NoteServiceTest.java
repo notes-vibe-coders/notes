@@ -120,7 +120,7 @@ class NoteServiceTest {
           .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
-      List<NoteDTO> response = underTest.getAllNotes(null, null);
+      List<NoteDTO> response = underTest.getAllNotes(null, null, null);
 
       verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase("");
       verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
@@ -144,7 +144,7 @@ class NoteServiceTest {
           .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
-      List<NoteDTO> response = underTest.getAllNotes(TITLE, CONTENT);
+      List<NoteDTO> response = underTest.getAllNotes(TITLE, CONTENT, null);
 
       verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase(TITLE);
       verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
@@ -159,6 +159,27 @@ class NoteServiceTest {
               noteSnapshot.getContent(),
               note.getCreatedAt(),
               note.getUpdatedAt());
+    }
+
+    @Test
+    void getAllImportantNotes_thenReturnAllNotes() {
+      Note importantNote = new Note("id1", "Important", Instant.now(), Instant.now(), true, true);
+      Note notImportantNote =
+          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false);
+
+      List<Note> allNotes = List.of(importantNote, notImportantNote);
+      when(noteRepository.findAllByTitleContainingIgnoreCase("")).thenReturn(allNotes);
+
+      NoteSnapshot snapshot = mock(NoteSnapshot.class);
+      when(snapshot.getContent()).thenReturn("Snapshot content");
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any(Note.class)))
+          .thenReturn(Optional.of(snapshot));
+
+      List<NoteDTO> result = underTest.getAllNotes(null, null, true);
+
+      assertThat(result).hasSize(1);
+      assertThat(result.getFirst().important()).isTrue();
+      verify(noteRepository).findAllByTitleContainingIgnoreCase("");
     }
   }
 

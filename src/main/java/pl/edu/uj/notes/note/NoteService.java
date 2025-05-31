@@ -71,11 +71,16 @@ public class NoteService {
         note.isImportant());
   }
 
-  public List<NoteDTO> getAllNotes(String title, String content) {
+  public List<NoteDTO> getAllNotes(String title, String content, Boolean important) {
     title = title == null ? "" : title;
     content = content == null ? "" : content;
+    important = important != null && important;
 
     List<Note> notes = noteRepository.findAllByTitleContainingIgnoreCase(title);
+
+    if (important) {
+      notes = notes.stream().filter(Note::isImportant).toList();
+    }
 
     Map<Note, NoteSnapshot> noteSnapshotMap = new HashMap<>();
     for (Note note : notes) {
