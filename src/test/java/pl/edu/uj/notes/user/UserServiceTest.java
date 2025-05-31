@@ -201,7 +201,8 @@ public class UserServiceTest {
       UserEntity user = new UserEntity(USERNAME, PASSWORD);
       userRepository.save(user);
       String userId = user.getId();
-      ViewUsersRequest viewUsersRequest = ViewUsersRequest.builder().idList(List.of(userId)).build();
+      ViewUsersRequest viewUsersRequest =
+          ViewUsersRequest.builder().idList(List.of(userId)).build();
 
       // When
       List<String> usernames = userService.viewUsers(viewUsersRequest);
@@ -215,7 +216,8 @@ public class UserServiceTest {
     void whenUserIsNotPresentInDatabase_thenThrowException() {
       // Given
       String fakeId = "fakeId";
-      ViewUsersRequest viewUsersRequest = ViewUsersRequest.builder().idList(List.of(fakeId)).build();
+      ViewUsersRequest viewUsersRequest =
+          ViewUsersRequest.builder().idList(List.of(fakeId)).build();
 
       // When & Then
       assertThrows(UsersNotFoundException.class, () -> userService.viewUsers(viewUsersRequest));
