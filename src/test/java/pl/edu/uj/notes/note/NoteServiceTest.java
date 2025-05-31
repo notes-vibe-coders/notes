@@ -120,7 +120,7 @@ class NoteServiceTest {
           .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
-      List<NoteDTO> response = underTest.getAllNotes(null, null);
+      List<NoteDTO> response = underTest.getAllNotes(null, null, null);
 
       verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase("");
       verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
@@ -144,7 +144,7 @@ class NoteServiceTest {
           .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
-      List<NoteDTO> response = underTest.getAllNotes(TITLE, CONTENT);
+      List<NoteDTO> response = underTest.getAllNotes(TITLE, CONTENT, null);
 
       verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase(TITLE);
       verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
@@ -159,6 +159,26 @@ class NoteServiceTest {
               noteSnapshot.getContent(),
               note.getCreatedAt(),
               note.getUpdatedAt());
+    }
+
+    @Test
+    void getAllImportantNotes_thenReturnAllNotes() {
+      Note importantNote = mock(Note.class);
+      when(importantNote.isImportant()).thenReturn(true);
+
+      Note notImportantNote = mock(Note.class);
+      when(notImportantNote.isImportant()).thenReturn(false);
+
+      List<Note> allNotes = List.of(importantNote, notImportantNote);
+      when(noteRepository.findAllByTitleContainingIgnoreCase("")).thenReturn(allNotes);
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
+              .thenReturn(Optional.of(mock(NoteSnapshot.class)));
+
+      List<NoteDTO> result = underTest.getAllNotes(null, null, true);
+
+      assertThat(result).hasSize(1);
+      assertThat(result.getFirst().important()).isTrue();
+      verify(noteRepository).findAllByTitleContainingIgnoreCase("");
     }
   }
 
