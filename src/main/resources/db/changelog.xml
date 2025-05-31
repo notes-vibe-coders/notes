@@ -70,4 +70,12 @@
     </addColumn>
   </changeSet>
 
+  <changeSet id="9" author="prusnarczyk">
+    <addColumn tableName="note">
+      <column name="owner_id" type="varchar">
+        <constraints foreignKeyName="owner_id" references="user_entity(id)"/>
+      </column>
+    </addColumn>
+  </changeSet>
+
 </databaseChangeLog>
