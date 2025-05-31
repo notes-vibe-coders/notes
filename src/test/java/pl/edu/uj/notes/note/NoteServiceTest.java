@@ -164,7 +164,7 @@ class NoteServiceTest {
     @Test
     void getAllImportantNotes_thenReturnAllNotes() {
       Note importantNote = new Note("id1", "Important", Instant.now(), Instant.now(), true, true);
-      Note notImportantNote = new Note("id2", "Not Important", Instant.now(), Instant.now(), false, true);
+      Note notImportantNote = new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
       when(noteRepository.findAllByTitleContainingIgnoreCase("")).thenReturn(allNotes);
