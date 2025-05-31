@@ -15,12 +15,14 @@ import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
 @Component
 @RequiredArgsConstructor
+// TODO: does this need to be public?
 public class NoteService {
 
   private final PrincipalService principalService;
   private final NoteRepository noteRepository;
   private final NoteSnapshotRepository noteSnapshotRepository;
 
+  // TODO: pls make sure, that this transactional works ok with non-public method
   @Transactional
   String createNote(CreateNoteRequest request) {
     Note note = new Note(request.title(), principalService.fetchCurrentUser());
