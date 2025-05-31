@@ -54,7 +54,7 @@ public class NoteService {
   public NoteDTO getNote(String id) {
     Note note =
         noteRepository
-            .findById(id)
+            .findByActiveAndId(true, id)
             .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
     NoteSnapshot recentMostSnapshot =
         noteSnapshotRepository
@@ -76,7 +76,7 @@ public class NoteService {
     content = content == null ? "" : content;
     important = important != null && important;
 
-    List<Note> notes = noteRepository.findAllByTitleContainingIgnoreCase(title);
+    List<Note> notes = noteRepository.findAllByTitleContainingIgnoreCaseAndActive(title, true);
 
     if (important) {
       notes = notes.stream().filter(Note::isImportant).toList();

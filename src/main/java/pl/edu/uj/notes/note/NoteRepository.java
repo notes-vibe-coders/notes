@@ -1,10 +1,13 @@
 package pl.edu.uj.notes.note;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 interface NoteRepository extends ListCrudRepository<Note, String> {
-  List<Note> findAllByTitleContainingIgnoreCase(String title);
+  List<Note> findAllByTitleContainingIgnoreCaseAndActive(String title, boolean active);
+
+  Optional<Note> findByActiveAndId(boolean active, String id);
 }
