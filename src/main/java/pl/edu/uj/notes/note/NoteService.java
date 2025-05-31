@@ -39,6 +39,15 @@ public class NoteService {
     }
   }
 
+  public void markAsImportant(String id) {
+    Note note =
+        noteRepository
+            .findById(id)
+            .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
+    note.setImportant(true);
+    noteRepository.save(note);
+  }
+
   NoteDTO getNote(String id) {
     Note note =
         noteRepository
@@ -51,7 +60,8 @@ public class NoteService {
         note.getTitle(),
         recentMostSnapshot.getContent(),
         note.getCreatedAt(),
-        note.getUpdatedAt());
+        note.getUpdatedAt(),
+        note.isImportant());
   }
 
   private NoteSnapshot getNoteSnapshot(Note note) {
@@ -71,7 +81,13 @@ public class NoteService {
 
     Map<Note, NoteSnapshot> noteSnapshotMap = new HashMap<>();
     for (Note note : notes) {
-      NoteSnapshot noteSnapshot = getNoteSnapshot(note);
+      NoteSnapshot noteSnapshot =
+          noteSnapshotRepository
+              .findFirstByNoteIdOrderByCreatedAtDesc(note)
+              .orElseThrow(
+                  () ->
+                      new NoteSnapshotNotFoundException(
+                          "Note snapshot not found for note: " + note.getId()));
       if (noteSnapshot.getContent().toLowerCase().contains(content.toLowerCase())) {
         noteSnapshotMap.put(note, noteSnapshot);
       }
@@ -85,7 +101,8 @@ public class NoteService {
                     entry.getKey().getTitle(),
                     entry.getValue().getContent(),
                     entry.getKey().getCreatedAt(),
-                    entry.getKey().getUpdatedAt()))
+                    entry.getKey().getUpdatedAt(),
+                    entry.getKey().isImportant()))
         .toList();
   }
 

@@ -34,6 +34,8 @@ public class Note {
 
   private boolean active = true;
 
+  private boolean important = false;
+
   public Note(String title) {
     this.title = title;
   }
