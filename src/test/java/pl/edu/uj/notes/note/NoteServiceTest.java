@@ -163,17 +163,16 @@ class NoteServiceTest {
 
     @Test
     void getAllImportantNotes_thenReturnAllNotes() {
-      Note importantNote = mock(Note.class);
-      when(importantNote.isImportant()).thenReturn(true);
-      when(importantNote.getId()).thenReturn("importantId");
-
-      Note notImportantNote = mock(Note.class);
-      when(notImportantNote.isImportant()).thenReturn(false);
+      Note importantNote = new Note("id1", "Important", Instant.now(), Instant.now(), true, true);
+      Note notImportantNote = new Note("id2", "Not Important", Instant.now(), Instant.now(), false, true);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
       when(noteRepository.findAllByTitleContainingIgnoreCase("")).thenReturn(allNotes);
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
-              .thenReturn(Optional.of(mock(NoteSnapshot.class)));
+
+      NoteSnapshot snapshot = mock(NoteSnapshot.class);
+      when(snapshot.getContent()).thenReturn("Snapshot content");
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any(Note.class)))
+              .thenReturn(Optional.of(snapshot));
 
       List<NoteDTO> result = underTest.getAllNotes(null, null, true);
 
