@@ -79,9 +79,7 @@ public class NoteService {
     List<Note> notes = noteRepository.findAllByTitleContainingIgnoreCase(title);
 
     if (important) {
-      notes = notes.stream()
-              .filter(Note::isImportant)
-              .toList();
+      notes = notes.stream().filter(Note::isImportant).toList();
     }
 
     Map<Note, NoteSnapshot> noteSnapshotMap = new HashMap<>();
