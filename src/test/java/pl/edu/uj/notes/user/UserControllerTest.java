@@ -66,7 +66,7 @@ class UserControllerTest {
   @Test
   void whenCorrectDeleteRequest_thenNoContent() throws Exception {
     String json =
-            """
+        """
             {
               "id": "123e4567-e89b-12d3-a456-426614174000"
             }
@@ -75,9 +75,10 @@ class UserControllerTest {
     doNothing().when(userService).deleteUser(any());
 
     mockMvc
-            .perform(delete(USER_URI + "/123e4567-e89b-12d3-a456-426614174000")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
-            .andExpect(status().isNoContent());
+        .perform(
+            delete(USER_URI + "/123e4567-e89b-12d3-a456-426614174000")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isNoContent());
   }
 }

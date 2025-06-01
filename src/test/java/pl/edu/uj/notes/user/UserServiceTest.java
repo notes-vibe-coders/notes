@@ -215,8 +215,10 @@ public class UserServiceTest {
 
       // When & Then
       var exception =
-              assertThrows(UnauthorizedUserAccessException.class, () -> userService.updatePassword(request));
-      assertEquals("You are not allowed to update user " + request.getUserId(), exception.getMessage());
+          assertThrows(
+              UnauthorizedUserAccessException.class, () -> userService.updatePassword(request));
+      assertEquals(
+          "You are not allowed to update user " + request.getUserId(), exception.getMessage());
     }
   }
 }
