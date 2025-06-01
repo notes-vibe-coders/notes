@@ -62,9 +62,9 @@ public class NoteService {
 
   public void markAsArchived(String id) {
     Note note =
-            noteRepository
-                    .findById(id)
-                    .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
+        noteRepository
+            .findById(id)
+            .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
     note.setArchived(true);
     noteRepository.save(note);
   }
@@ -94,7 +94,6 @@ public class NoteService {
   private NoteSnapshot getNoteSnapshot(Note note) {
     if (note.isArchived()) {
       throw new NoteIsArchivizedException("Note with ID " + note.getId() + " is archivized");
-
     }
     return noteSnapshotRepository
         .findFirstByNoteIdOrderByCreatedAtDesc(note)
@@ -199,10 +198,13 @@ public class NoteService {
 
   public List<Note> getNotes(List<String> noteIds) {
     return noteRepository.findAllById(noteIds).stream()
-            .peek(note -> {
+        .peek(
+            note -> {
               if (note.isArchived()) {
-                throw new NoteIsArchivizedException("Note with ID " + note.getId() + " is archivized");
+                throw new NoteIsArchivizedException(
+                    "Note with ID " + note.getId() + " is archivized");
               }
-            }).toList();
+            })
+        .toList();
   }
 }

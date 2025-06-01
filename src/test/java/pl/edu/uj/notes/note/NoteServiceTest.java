@@ -19,8 +19,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import pl.edu.uj.notes.note.exception.NoteIsArchivizedException;
 import pl.edu.uj.notes.authentication.PrincipalService;
+import pl.edu.uj.notes.note.exception.NoteIsArchivizedException;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 import pl.edu.uj.notes.user.UserEntity;
@@ -203,13 +203,13 @@ class NoteServiceTest {
     @Test
     void getAllArchivizedNotes_thenThrowException() {
       Note importantNote =
-              new Note("id1", "Important", Instant.now(), Instant.now(), true, true, true, user);
+          new Note("id1", "Important", Instant.now(), Instant.now(), true, true, true, user);
       Note notImportantNote =
-              new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, true, user);
+          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, true, user);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
       when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
-              .thenReturn(allNotes);
+          .thenReturn(allNotes);
 
       assertThrows(NoteIsArchivizedException.class, () -> underTest.getAllNotes(null, null, true));
     }
@@ -255,7 +255,8 @@ class NoteServiceTest {
             Instant.now().minus(5, MINUTES),
             true,
             false,
-            false, user);
+            false,
+            user);
     NoteSnapshot TEST_SNAPSHOT =
         new NoteSnapshot(
             ID,
@@ -291,7 +292,7 @@ class NoteServiceTest {
       when(noteRepository.findById(any())).thenReturn(Optional.of(note));
 
       assertThatCode(() -> underTest.updateNote(ID, updateRequest))
-              .isExactlyInstanceOf(NoteIsArchivizedException.class);
+          .isExactlyInstanceOf(NoteIsArchivizedException.class);
     }
 
     @Test
@@ -453,7 +454,8 @@ class NoteServiceTest {
       var archivizedNote = new Note().withArchived(true).withId(NOTE_ID);
       when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(archivizedNote));
 
-      assertThrows(NoteIsArchivizedException.class, () -> underTest.markAsImportant(NOTE_ID));}
+      assertThrows(NoteIsArchivizedException.class, () -> underTest.markAsImportant(NOTE_ID));
+    }
   }
 
   @Nested
