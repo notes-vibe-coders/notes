@@ -9,6 +9,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import pl.edu.uj.notes.authentication.PrincipalService;
 import pl.edu.uj.notes.note.exception.NoteIsArchivizedException;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
@@ -17,12 +18,13 @@ import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 @RequiredArgsConstructor
 public class NoteService {
 
+  private final PrincipalService principalService;
   private final NoteRepository noteRepository;
   private final NoteSnapshotRepository noteSnapshotRepository;
 
   @Transactional
   String createNote(CreateNoteRequest request) {
-    Note note = new Note(request.title());
+    Note note = new Note(request.title(), principalService.fetchCurrentUser());
     note = noteRepository.save(note);
 
     NoteSnapshot noteSnapshot = new NoteSnapshot(note, request.content());

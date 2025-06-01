@@ -20,8 +20,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.edu.uj.notes.note.exception.NoteIsArchivizedException;
+import pl.edu.uj.notes.authentication.PrincipalService;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
+import pl.edu.uj.notes.user.UserEntity;
 
 @ExtendWith(MockitoExtension.class)
 class NoteServiceTest {
@@ -33,10 +35,13 @@ class NoteServiceTest {
 
   @Mock NoteSnapshotRepository noteSnapshotRepository;
   @Mock NoteRepository noteRepository;
+  @Mock PrincipalService principalService;
   @InjectMocks NoteService underTest;
 
   @Mock Note note;
   @Mock NoteSnapshot noteSnapshot;
+
+  @Mock UserEntity user;
 
   @Nested
   class createNote {
@@ -175,9 +180,9 @@ class NoteServiceTest {
     @Test
     void getAllImportantNotes_thenReturnAllNotes() {
       Note importantNote =
-          new Note("id1", "Important", Instant.now(), Instant.now(), true, true, false);
+          new Note("id1", "Important", Instant.now(), Instant.now(), true, true, false, user);
       Note notImportantNote =
-          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, false);
+          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, false, user);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
       when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
@@ -198,9 +203,9 @@ class NoteServiceTest {
     @Test
     void getAllArchivizedNotes_thenThrowException() {
       Note importantNote =
-              new Note("id1", "Important", Instant.now(), Instant.now(), true, true, true);
+              new Note("id1", "Important", Instant.now(), Instant.now(), true, true, true, user);
       Note notImportantNote =
-              new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, true);
+              new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, true, user);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
       when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
@@ -250,7 +255,7 @@ class NoteServiceTest {
             Instant.now().minus(5, MINUTES),
             true,
             false,
-            false);
+            false, user);
     NoteSnapshot TEST_SNAPSHOT =
         new NoteSnapshot(
             ID,
