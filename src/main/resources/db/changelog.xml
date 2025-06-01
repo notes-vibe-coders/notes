@@ -78,4 +78,10 @@
     </addColumn>
   </changeSet>
 
+  <changeSet id="10" author="hubertp21">
+    <addColumn tableName="note">
+      <column name="archived" type="boolean" defaultValueBoolean="false"/>
+    </addColumn>
+  </changeSet>
+
 </databaseChangeLog>

@@ -39,12 +39,13 @@ public class Note {
 
   private boolean important = false;
 
+  private boolean archived = false;
+
   @ManyToOne
   @JoinColumn(name = "owner_id")
   private UserEntity owner;
 
   public Note(String title, UserEntity owner) {
     this.title = title;
-    this.owner = owner;
   }
 }
