@@ -192,5 +192,31 @@ public class UserServiceTest {
           assertThrows(UserNotFoundException.class, () -> userService.updatePassword(request));
       assertEquals("User not found", exception.getMessage());
     }
+
+    @Test
+    void whenUserDoesNotHaveWritePermissions_thenThrowUnauthorizedUserAccessException() {
+      // Given
+      when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+      when(accessControlService.userHasAccessTo(any(), any())).thenReturn(false);
+
+      UserEntity user = new UserEntity(USERNAME, ENCODED_PASSWORD);
+      userRepository.save(user);
+      String userId = user.getId();
+
+      String newPassword = "newSecret123";
+      String encodedNewPassword = "encodedNewPassword";
+      when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+      when(passwordEncoder.encode(newPassword)).thenReturn(encodedNewPassword);
+
+      UpdatePasswordRequest request = new UpdatePasswordRequest();
+      request.setUserId(userId);
+      request.setOldPassword(PASSWORD);
+      request.setNewPassword(newPassword);
+
+      // When & Then
+      var exception =
+              assertThrows(UnauthorizedUserAccessException.class, () -> userService.updatePassword(request));
+      assertEquals("You are not allowed to update user " + request.getUserId(), exception.getMessage());
+    }
   }
 }
