@@ -62,4 +62,59 @@ class UserControllerTest {
         .perform(put(USER_URI + "/password").contentType(MediaType.APPLICATION_JSON).content(json))
         .andExpect(status().isNoContent());
   }
+
+  @WithMockUser(roles = "ADMIN")
+  @Test
+  void whenAdminBlocksUser_thenReturnNoContent() throws Exception {
+    String json = """
+      {
+        "userId": "some-user-id",
+        "block": true
+      }
+      """;
+
+    doNothing().when(userService).setUserBlockedStatus(any());
+
+    mockMvc
+            .perform(put(USER_URI + "/block")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json))
+            .andExpect(status().isNoContent());
+  }
+
+  @WithMockUser(roles = "USER")
+  @Test
+  void whenUserTriesToBlockUser_thenForbidden() throws Exception {
+    String json = """
+      {
+        "userId": "some-user-id",
+        "block": true
+      }
+      """;
+
+    mockMvc
+            .perform(put(USER_URI + "/block")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json))
+            .andExpect(status().isForbidden());
+  }
+
+  @WithMockUser(roles = "ADMIN")
+  @Test
+  void whenRequestMissingUserId_thenBadRequest() throws Exception {
+    String json = """
+      {
+        "block": true
+      }
+      """;
+
+    mockMvc
+            .perform(put(USER_URI + "/block")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json))
+            .andExpect(status().isBadRequest());
+  }
+
+
+
 }

@@ -70,4 +70,10 @@
     </addColumn>
   </changeSet>
 
+  <changeSet id="9" author="bstachow">
+    <addColumn tableName="user_entity">
+      <column name="is_blocked" type="boolean" defaultValueBoolean="false"/>
+    </addColumn>
+  </changeSet>
+
 </databaseChangeLog>

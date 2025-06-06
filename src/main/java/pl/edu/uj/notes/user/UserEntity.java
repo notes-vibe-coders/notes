@@ -28,6 +28,10 @@ public class UserEntity {
 
   private boolean isAdmin;
 
+  @Column(nullable = false)
+  private boolean isBlocked = false;
+
+
   public UserEntity(String username, String password) {
     this.username = username;
     this.password = password;

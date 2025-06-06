@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,4 +31,12 @@ class UserController {
     userService.updatePassword(request);
     return ResponseEntity.noContent().build();
   }
+
+  @PutMapping("/block")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<Void> blockUser(@Valid @RequestBody BlockUserRequest request) {
+    userService.setUserBlockedStatus(request);
+    return ResponseEntity.noContent().build();
+  }
+
 }
