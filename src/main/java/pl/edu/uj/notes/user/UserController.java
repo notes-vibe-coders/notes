@@ -38,5 +38,4 @@ class UserController {
     userService.setUserBlockedStatus(request);
     return ResponseEntity.noContent().build();
   }
-
 }

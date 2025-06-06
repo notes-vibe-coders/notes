@@ -62,11 +62,12 @@ public class UserService {
   }
 
   public void setUserBlockedStatus(BlockUserRequest request) {
-    UserEntity user = userRepository.findById(request.getUserId())
+    UserEntity user =
+        userRepository
+            .findById(request.getUserId())
             .orElseThrow(() -> new UserNotFoundException("User not found"));
 
     user.setBlocked(request.isBlock());
     userRepository.save(user);
   }
-
 }

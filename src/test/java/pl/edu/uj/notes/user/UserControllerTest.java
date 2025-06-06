@@ -66,7 +66,8 @@ class UserControllerTest {
   @WithMockUser(roles = "ADMIN")
   @Test
   void whenAdminBlocksUser_thenReturnNoContent() throws Exception {
-    String json = """
+    String json =
+        """
       {
         "userId": "some-user-id",
         "block": true
@@ -76,16 +77,15 @@ class UserControllerTest {
     doNothing().when(userService).setUserBlockedStatus(any());
 
     mockMvc
-            .perform(put(USER_URI + "/block")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
-            .andExpect(status().isNoContent());
+        .perform(put(USER_URI + "/block").contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isNoContent());
   }
 
   @WithMockUser(roles = "USER")
   @Test
   void whenUserTriesToBlockUser_thenForbidden() throws Exception {
-    String json = """
+    String json =
+        """
       {
         "userId": "some-user-id",
         "block": true
@@ -93,28 +93,22 @@ class UserControllerTest {
       """;
 
     mockMvc
-            .perform(put(USER_URI + "/block")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
-            .andExpect(status().isForbidden());
+        .perform(put(USER_URI + "/block").contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isForbidden());
   }
 
   @WithMockUser(roles = "ADMIN")
   @Test
   void whenRequestMissingUserId_thenBadRequest() throws Exception {
-    String json = """
+    String json =
+        """
       {
         "block": true
       }
       """;
 
     mockMvc
-            .perform(put(USER_URI + "/block")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
-            .andExpect(status().isBadRequest());
+        .perform(put(USER_URI + "/block").contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isBadRequest());
   }
-
-
-
 }

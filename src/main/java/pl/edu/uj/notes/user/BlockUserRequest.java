@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BlockUserRequest {
-    @NotBlank
-    private String userId;
-    private boolean block;
+  @NotBlank private String userId;
+  private boolean block;
 }

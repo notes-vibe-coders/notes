@@ -60,6 +60,7 @@ class AuthenticationServiceTest {
 
     assertThat(userDetails.isEnabled()).isFalse();
   }
+
   @Test
   void adminUser_hasRoleAdminAuthority() {
     var user = new UserEntity("admin", "password");
@@ -70,9 +71,10 @@ class AuthenticationServiceTest {
     var userDetails = underTest.loadUserByUsername(user.getUsername());
 
     assertThat(userDetails.getAuthorities())
-            .extracting(Object::toString)
-            .containsExactly("ROLE_ADMIN");
+        .extracting(Object::toString)
+        .containsExactly("ROLE_ADMIN");
   }
+
   @Test
   void regularUser_hasNoAuthorities() {
     var user = new UserEntity("user", "password");
@@ -83,5 +85,4 @@ class AuthenticationServiceTest {
 
     assertThat(userDetails.getAuthorities()).isEmpty();
   }
-
 }
