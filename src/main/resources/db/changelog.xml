@@ -70,7 +70,15 @@
     </addColumn>
   </changeSet>
 
-  <changeSet id="9" author="bstachow">
+  <changeSet id="9" author="prusnarczyk">
+    <addColumn tableName="note">
+      <column name="owner_id" type="varchar">
+        <constraints foreignKeyName="owner_id" references="user_entity(id)"/>
+      </column>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="10" author="bstachow">
     <addColumn tableName="user_entity">
       <column name="is_blocked" type="boolean" defaultValueBoolean="false"/>
     </addColumn>

@@ -5,6 +5,8 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +15,7 @@ import lombok.With;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import pl.edu.uj.notes.user.UserEntity;
 
 @Data
 @With
@@ -36,7 +39,12 @@ public class Note {
 
   private boolean important = false;
 
-  public Note(String title) {
+  @ManyToOne
+  @JoinColumn(name = "owner_id")
+  private UserEntity owner;
+
+  public Note(String title, UserEntity owner) {
     this.title = title;
+    this.owner = owner;
   }
 }
