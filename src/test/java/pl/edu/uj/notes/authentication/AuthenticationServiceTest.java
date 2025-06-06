@@ -48,4 +48,41 @@ class AuthenticationServiceTest {
         .extracting(UserDetails::getUsername, UserDetails::getPassword)
         .containsExactly(user.getUsername(), user.getPassword());
   }
+
+  @Test
+  void blockedUser_isDisabled() {
+    var user = new UserEntity("user", "password");
+    user.setBlocked(true);
+
+    when(userService.getUserByUsername(any())).thenReturn(Optional.of(user));
+
+    var userDetails = underTest.loadUserByUsername(user.getUsername());
+
+    assertThat(userDetails.isEnabled()).isFalse();
+  }
+
+  @Test
+  void adminUser_hasRoleAdminAuthority() {
+    var user = new UserEntity("admin", "password");
+    user.setAdmin(true);
+
+    when(userService.getUserByUsername(any())).thenReturn(Optional.of(user));
+
+    var userDetails = underTest.loadUserByUsername(user.getUsername());
+
+    assertThat(userDetails.getAuthorities())
+        .extracting(Object::toString)
+        .containsExactly("ROLE_ADMIN");
+  }
+
+  @Test
+  void regularUser_hasNoAuthorities() {
+    var user = new UserEntity("user", "password");
+
+    when(userService.getUserByUsername(any())).thenReturn(Optional.of(user));
+
+    var userDetails = underTest.loadUserByUsername(user.getUsername());
+
+    assertThat(userDetails.getAuthorities()).isEmpty();
+  }
 }

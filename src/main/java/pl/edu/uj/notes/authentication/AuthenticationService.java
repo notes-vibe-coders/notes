@@ -53,6 +53,10 @@ record UserDetailsAdapter(UserEntity user) implements UserDetails {
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
+    if (user.isAdmin()) {
+      return List.of(
+          new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
+    }
     return List.of();
   }
 
@@ -64,5 +68,10 @@ record UserDetailsAdapter(UserEntity user) implements UserDetails {
   @Override
   public String getUsername() {
     return user.getUsername();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return !user.isBlocked();
   }
 }
