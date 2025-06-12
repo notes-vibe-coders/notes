@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import pl.edu.uj.notes.user.InternalUserService;
 import pl.edu.uj.notes.user.UserEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Component
 @RequiredArgsConstructor
@@ -55,7 +56,7 @@ record UserDetailsAdapter(UserEntity user) implements UserDetails {
   public Collection<? extends GrantedAuthority> getAuthorities() {
     if (user.isAdmin()) {
       return List.of(
-          new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"));
+          new SimpleGrantedAuthority("ROLE_ADMIN"));
     }
     return List.of();
   }
