@@ -32,10 +32,11 @@ class CategoryController {
     return ResponseEntity.ok(categoryService.getCategory(id));
   }
 
-  @PutMapping
+  @PutMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
-  ResponseEntity<Category> updateCategory(@RequestBody UpdateCategoryRequest request) {
-    return ResponseEntity.ok(categoryService.updateCategory(request));
+  ResponseEntity<CategoryDTO> updateCategory(
+      @PathVariable String id, @RequestBody UpdateCategoryRequest request) {
+    return ResponseEntity.ok(categoryService.updateCategory(id, request));
   }
 
   @DeleteMapping("/{id}")
