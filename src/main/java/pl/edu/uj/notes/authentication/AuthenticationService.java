@@ -6,6 +6,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,7 +14,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import pl.edu.uj.notes.user.InternalUserService;
 import pl.edu.uj.notes.user.UserEntity;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Component
 @RequiredArgsConstructor
@@ -55,8 +55,7 @@ record UserDetailsAdapter(UserEntity user) implements UserDetails {
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     if (user.isAdmin()) {
-      return List.of(
-          new SimpleGrantedAuthority("ROLE_ADMIN"));
+      return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
     }
     return List.of();
   }
