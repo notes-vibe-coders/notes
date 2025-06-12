@@ -6,6 +6,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -53,6 +54,9 @@ record UserDetailsAdapter(UserEntity user) implements UserDetails {
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
+    if (user.isAdmin()) {
+      return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    }
     return List.of();
   }
 
@@ -64,5 +68,10 @@ record UserDetailsAdapter(UserEntity user) implements UserDetails {
   @Override
   public String getUsername() {
     return user.getUsername();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return !user.isBlocked();
   }
 }

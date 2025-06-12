@@ -77,7 +77,13 @@
       </column>
     </addColumn>
   </changeSet>
-
+  
+  <changeSet id="10" author="bstachow">
+    <addColumn tableName="user_entity">
+      <column name="is_blocked" type="boolean" defaultValueBoolean="false"/>
+    </addColumn>
+  </changeSet>
+  
   <changeSet id="1749757072773-1" author="ksikora">
     <createTable tableName="category">
       <column name="id" type="varchar">
@@ -86,7 +92,7 @@
       <column name="name" type="varchar"/>
     </createTable>
   </changeSet>
-
+  
   <changeSet id="1749757072773-2" author="ksikora">
     <createTable tableName="category_notes">
       <column name="category_id" type="varchar">
@@ -97,5 +103,6 @@
       </column>
     </createTable>
   </changeSet>
+
 
 </databaseChangeLog>
