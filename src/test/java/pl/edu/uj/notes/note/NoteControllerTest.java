@@ -110,9 +110,7 @@ class NoteControllerTest {
             }
             """;
 
-    Mockito.doThrow(new NoteNotFoundException("Note with ID " + id + " does not exist"))
-        .when(noteService)
-        .deleteNote(deleteNoteRequest);
+    Mockito.doThrow(new NoteNotFoundException()).when(noteService).deleteNote(deleteNoteRequest);
 
     mockMvc
         .perform(delete(NOTE_URI).contentType(MediaType.APPLICATION_JSON).content(request))
@@ -207,9 +205,7 @@ class NoteControllerTest {
     void noteNotFound_returnsNotFound() throws Exception {
       String id = "nonExistingId";
 
-      Mockito.doThrow(new NoteNotFoundException("Note with ID " + id + " does not exist"))
-          .when(noteService)
-          .markAsImportant(id);
+      Mockito.doThrow(new NoteNotFoundException()).when(noteService).markAsImportant(id);
 
       mockMvc
           .perform(

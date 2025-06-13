@@ -7,7 +7,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 interface NoteRepository extends JpaRepository<Note, String> {
-  List<Note> findAllByTitleContainingIgnoreCaseAndActive(String title, boolean active);
+  List<Note> findAllByTitleContainingIgnoreCaseAndActiveIsTrue(String title);
 
   Optional<Note> findByActiveAndId(boolean active, String id);
+
+  Optional<Note> findByIdAndActiveIsTrue(String id);
 }
