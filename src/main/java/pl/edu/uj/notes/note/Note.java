@@ -13,6 +13,7 @@ import lombok.With;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 @Data
 @With
@@ -35,6 +36,17 @@ public class Note {
   private boolean active = true;
 
   private boolean important = false;
+  private String passwordHash;
+
+  public void setPassword(String rawPassword) {
+    if (rawPassword != null && !rawPassword.isBlank()) {
+      this.passwordHash = BCrypt.hashpw(rawPassword, BCrypt.gensalt());
+    }
+  }
+
+  public boolean isPasswordCorrect(String rawPassword) {
+    return passwordHash == null || BCrypt.checkpw(rawPassword, this.passwordHash);
+  }
 
   public Note(String title) {
     this.title = title;

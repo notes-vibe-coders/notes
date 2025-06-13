@@ -19,6 +19,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.edu.uj.notes.note.exception.NoteAccessDeniedException;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
@@ -73,6 +74,24 @@ class NoteServiceTest {
 
       assertThat(id).isEqualTo(NOTE_ID);
     }
+
+    @Test
+    void createNote_withPassword_shouldSetPasswordHash() {
+      String rawPassword = "superSecret";
+      ArgumentCaptor<Note> captor = ArgumentCaptor.forClass(Note.class);
+
+      when(noteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+      when(noteSnapshotRepository.save(any())).thenReturn(noteSnapshot);
+
+      CreateNoteRequest request = new CreateNoteRequest("title", "content", rawPassword);
+      underTest.createNote(request);
+
+      verify(noteRepository).save(captor.capture());
+
+      Note savedNote = captor.getValue();
+      assertThat(savedNote.getPasswordHash()).isNotNull();
+      assertThat(savedNote.isPasswordCorrect(rawPassword)).isTrue();
+    }
   }
 
   @Nested
@@ -84,7 +103,7 @@ class NoteServiceTest {
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
 
-      when(noteSnapshot.getPasswordHash()).thenReturn(null);
+      when(note.getPasswordHash()).thenReturn(null);
 
       NoteDTO response = underTest.getNote(NOTE_ID);
 
@@ -104,9 +123,9 @@ class NoteServiceTest {
       when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
-      when(noteSnapshot.getPasswordHash()).thenReturn("someHash");
+      when(note.getPasswordHash()).thenReturn("someHash");
 
-      assertThrows(SecurityException.class, () -> underTest.getNote(NOTE_ID));
+      assertThrows(NoteAccessDeniedException.class, () -> underTest.getNote(NOTE_ID));
     }
 
     @Test
@@ -133,7 +152,7 @@ class NoteServiceTest {
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
 
-      when(noteSnapshot.isPasswordCorrect("pass123")).thenReturn(true);
+      when(note.isPasswordCorrect("pass123")).thenReturn(true);
 
       when(note.getId()).thenReturn(NOTE_ID);
       when(note.getTitle()).thenReturn(TITLE);
@@ -159,9 +178,10 @@ class NoteServiceTest {
       when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
-      when(noteSnapshot.isPasswordCorrect("wrong")).thenReturn(false);
+      when(note.isPasswordCorrect("wrong")).thenReturn(false);
 
-      assertThrows(SecurityException.class, () -> underTest.getNoteWithPassword(NOTE_ID, "wrong"));
+      assertThrows(
+          NoteAccessDeniedException.class, () -> underTest.getNoteWithPassword(NOTE_ID, "wrong"));
     }
 
     @Test
@@ -172,7 +192,7 @@ class NoteServiceTest {
           .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
 
-      when(noteSnapshot.getPasswordHash()).thenReturn(null);
+      when(note.getPasswordHash()).thenReturn(null);
 
       List<NoteDTO> response = underTest.getAllNotes(null, null, null);
 
@@ -197,7 +217,7 @@ class NoteServiceTest {
           .thenReturn(List.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
-      when(noteSnapshot.getPasswordHash()).thenReturn("hash");
+      when(note.getPasswordHash()).thenReturn("hash");
 
       List<NoteDTO> result = underTest.getAllNotes(null, null, null);
 
@@ -231,9 +251,10 @@ class NoteServiceTest {
 
     @Test
     void getAllImportantNotes_thenReturnAllNotes() {
-      Note importantNote = new Note("id1", "Important", Instant.now(), Instant.now(), true, true);
+      Note importantNote =
+          new Note("id1", "Important", Instant.now(), Instant.now(), true, true, null);
       Note notImportantNote =
-          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false);
+          new Note("id2", "Not Important", Instant.now(), Instant.now(), true, false, null);
 
       List<Note> allNotes = List.of(importantNote, notImportantNote);
       when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
@@ -292,15 +313,15 @@ class NoteServiceTest {
             Instant.now().minus(10, MINUTES),
             Instant.now().minus(5, MINUTES),
             true,
-            false);
+            false,
+            null);
     NoteSnapshot TEST_SNAPSHOT =
         new NoteSnapshot(
             ID,
             TEST_NOTE,
             CONTENT,
             Instant.now().minus(2, MINUTES),
-            Instant.now().minus(1, MINUTES),
-            null);
+            Instant.now().minus(1, MINUTES));
 
     @Test
     void noteNotFound_throwsNotFoundException() {
@@ -431,6 +452,44 @@ class NoteServiceTest {
                   TEST_NOTE.isImportant()));
 
       verify(noteSnapshotRepository, never()).save(any());
+    }
+
+    @Test
+    void updateNote_withPassword_shouldUpdateHash() {
+      String newPassword = "newPassword123";
+      Instant now = Instant.now();
+
+      Note note =
+          new Note(
+              NOTE_ID, TITLE, now.minus(10, MINUTES), now.minus(5, MINUTES), true, false, null);
+
+      NoteSnapshot previousSnapshot = new NoteSnapshot(note, CONTENT);
+      previousSnapshot.setCreatedAt(now.minus(2, MINUTES));
+      previousSnapshot.setUpdatedAt(now.minus(1, MINUTES));
+
+      NoteSnapshot savedSnapshot = new NoteSnapshot(note, CONTENT);
+      savedSnapshot.setCreatedAt(now);
+      savedSnapshot.setUpdatedAt(now);
+
+      CreateNoteRequest request = new CreateNoteRequest(TITLE, CONTENT, newPassword);
+
+      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+          .thenReturn(Optional.of(previousSnapshot));
+
+      when(noteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+      NoteDTO result = underTest.updateNote(NOTE_ID, request);
+
+      assertThat(note.getPasswordHash()).isNotNull();
+      assertThat(note.isPasswordCorrect(newPassword)).isTrue();
+
+      assertThat(result.id()).isEqualTo(NOTE_ID);
+      assertThat(result.title()).isEqualTo(TITLE);
+      assertThat(result.content()).isEqualTo(CONTENT);
+      assertThat(result.important()).isEqualTo(false);
+
+      verify(noteRepository, atLeastOnce()).save(note);
     }
   }
 

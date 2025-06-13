@@ -9,6 +9,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import pl.edu.uj.notes.note.exception.NoteAccessDeniedException;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
 import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
@@ -22,10 +23,10 @@ public class NoteService {
   @Transactional
   String createNote(CreateNoteRequest request) {
     Note note = new Note(request.title());
+    note.setPassword(request.password());
     note = noteRepository.save(note);
 
     NoteSnapshot noteSnapshot = new NoteSnapshot(note, request.content());
-    noteSnapshot.setPassword(request.password());
     noteSnapshotRepository.save(noteSnapshot);
     return note.getId();
   }
@@ -61,8 +62,8 @@ public class NoteService {
 
     NoteSnapshot snapshot = getNoteSnapshot(note);
 
-    if (snapshot.getPasswordHash() != null) {
-      throw new SecurityException("Password required to access this note");
+    if (note.getPasswordHash() != null) {
+      throw new NoteAccessDeniedException("Password required to access this note");
     }
 
     return new NoteDTO(
@@ -104,7 +105,7 @@ public class NoteService {
                       new NoteSnapshotNotFoundException(
                           "Note snapshot not found for note: " + note.getId()));
 
-      if (noteSnapshot.getPasswordHash() != null) {
+      if (note.getPasswordHash() != null) {
         continue;
       }
 
@@ -133,8 +134,14 @@ public class NoteService {
     }
 
     Note note = currentNoteOptional.get();
+
     if (!StringUtils.equals(note.getTitle(), request.title())) {
       note.setTitle(request.title());
+      note = noteRepository.save(note);
+    }
+
+    if (request.password() != null && !request.password().isBlank()) {
+      note.setPassword(request.password());
       note = noteRepository.save(note);
     }
 
@@ -181,8 +188,8 @@ public class NoteService {
 
     NoteSnapshot snapshot = getNoteSnapshot(note);
 
-    if (!snapshot.isPasswordCorrect(password)) {
-      throw new SecurityException("Incorrect password");
+    if (!note.isPasswordCorrect(password)) {
+      throw new NoteAccessDeniedException("Incorrect password");
     }
 
     return new NoteDTO(note, snapshot);
