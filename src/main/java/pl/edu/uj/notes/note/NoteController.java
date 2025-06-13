@@ -59,4 +59,16 @@ class NoteController {
     noteService.markAsImportant(id);
     return ResponseEntity.noContent().build();
   }
+
+  @ExceptionHandler(SecurityException.class)
+  public ResponseEntity<String> handleSecurity(SecurityException ex) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+  }
+
+  @GetMapping("/{id}/with-password")
+  public ResponseEntity<NoteDTO> getNoteWithPassword(
+      @PathVariable String id, @RequestParam String password) {
+
+    return ResponseEntity.ok(noteService.getNoteWithPassword(id, password));
+  }
 }

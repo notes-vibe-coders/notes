@@ -25,6 +25,7 @@ public class NoteService {
     note = noteRepository.save(note);
 
     NoteSnapshot noteSnapshot = new NoteSnapshot(note, request.content());
+    noteSnapshot.setPassword(request.password());
     noteSnapshotRepository.save(noteSnapshot);
     return note.getId();
   }
@@ -57,12 +58,17 @@ public class NoteService {
         noteRepository
             .findByActiveAndId(true, id)
             .orElseThrow(() -> new NoteNotFoundException("Note not found: " + id));
-    NoteSnapshot recentMostSnapshot = getNoteSnapshot(note);
+
+    NoteSnapshot snapshot = getNoteSnapshot(note);
+
+    if (snapshot.getPasswordHash() != null) {
+      throw new SecurityException("Password required to access this note");
+    }
 
     return new NoteDTO(
         note.getId(),
         note.getTitle(),
-        recentMostSnapshot.getContent(),
+        snapshot.getContent(),
         note.getCreatedAt(),
         note.getUpdatedAt(),
         note.isImportant());
@@ -97,6 +103,11 @@ public class NoteService {
                   () ->
                       new NoteSnapshotNotFoundException(
                           "Note snapshot not found for note: " + note.getId()));
+
+      if (noteSnapshot.getPasswordHash() != null) {
+        continue;
+      }
+
       if (noteSnapshot.getContent().toLowerCase().contains(content.toLowerCase())) {
         noteSnapshotMap.put(note, noteSnapshot);
       }
@@ -160,5 +171,20 @@ public class NoteService {
 
   public List<Note> getNotes(List<String> noteIds) {
     return noteRepository.findAllById(noteIds);
+  }
+
+  public NoteDTO getNoteWithPassword(String id, String password) {
+    Note note =
+        noteRepository
+            .findByActiveAndId(true, id)
+            .orElseThrow(() -> new NoteNotFoundException("Note not found"));
+
+    NoteSnapshot snapshot = getNoteSnapshot(note);
+
+    if (!snapshot.isPasswordCorrect(password)) {
+      throw new SecurityException("Incorrect password");
+    }
+
+    return new NoteDTO(note, snapshot);
   }
 }

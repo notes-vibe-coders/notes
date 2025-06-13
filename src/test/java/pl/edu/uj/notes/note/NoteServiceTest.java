@@ -45,7 +45,7 @@ class NoteServiceTest {
 
     @Test
     void createNoteShouldCreateNoteAndSnapshot() {
-      var createNoteRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var createNoteRequest = new CreateNoteRequest(TITLE, CONTENT, null);
 
       when(noteSnapshotRepository.save(any())).thenReturn(noteSnapshot);
       when(noteRepository.save(any())).thenReturn(note);
@@ -63,7 +63,7 @@ class NoteServiceTest {
 
     @Test
     void createNoteReturnsId() {
-      var createNoteRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var createNoteRequest = new CreateNoteRequest(TITLE, CONTENT, null);
 
       when(noteSnapshotRepository.save(any())).thenReturn(noteSnapshot);
       when(noteRepository.save(any())).thenReturn(note);
@@ -84,6 +84,8 @@ class NoteServiceTest {
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
 
+      when(noteSnapshot.getPasswordHash()).thenReturn(null);
+
       NoteDTO response = underTest.getNote(NOTE_ID);
 
       assertThat(response)
@@ -95,6 +97,16 @@ class NoteServiceTest {
               noteSnapshot.getContent(),
               note.getCreatedAt(),
               note.getUpdatedAt());
+    }
+
+    @Test
+    void getNoteById_whenPasswordProtected_thenThrowSecurityException() {
+      when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+          .thenReturn(Optional.of(noteSnapshot));
+      when(noteSnapshot.getPasswordHash()).thenReturn("someHash");
+
+      assertThrows(SecurityException.class, () -> underTest.getNote(NOTE_ID));
     }
 
     @Test
@@ -114,12 +126,53 @@ class NoteServiceTest {
     }
 
     @Test
+    void getNoteWithPassword_whenPasswordCorrect_returnsNote() {
+      Instant now = Instant.now();
+
+      when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+          .thenReturn(Optional.of(noteSnapshot));
+
+      when(noteSnapshot.isPasswordCorrect("pass123")).thenReturn(true);
+
+      when(note.getId()).thenReturn(NOTE_ID);
+      when(note.getTitle()).thenReturn(TITLE);
+      when(note.getCreatedAt()).thenReturn(now);
+      when(note.getUpdatedAt()).thenReturn(now);
+      when(note.isImportant()).thenReturn(false);
+
+      when(noteSnapshot.getContent()).thenReturn(CONTENT);
+      when(noteSnapshot.getUpdatedAt()).thenReturn(now);
+
+      NoteDTO dto = underTest.getNoteWithPassword(NOTE_ID, "pass123");
+
+      assertThat(dto.id()).isEqualTo(NOTE_ID);
+      assertThat(dto.title()).isEqualTo(TITLE);
+      assertThat(dto.content()).isEqualTo(CONTENT);
+      assertThat(dto.createdAt()).isEqualTo(now);
+      assertThat(dto.updatedAt()).isEqualTo(now);
+      assertThat(dto.important()).isFalse();
+    }
+
+    @Test
+    void getNoteWithPassword_whenPasswordIncorrect_throwsSecurityException() {
+      when(noteRepository.findByActiveAndId(true, NOTE_ID)).thenReturn(Optional.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+          .thenReturn(Optional.of(noteSnapshot));
+      when(noteSnapshot.isPasswordCorrect("wrong")).thenReturn(false);
+
+      assertThrows(SecurityException.class, () -> underTest.getNoteWithPassword(NOTE_ID, "wrong"));
+    }
+
+    @Test
     void getAllNotes_thenReturnAllNotes() {
       when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
           .thenReturn(List.of(note));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
           .thenReturn(Optional.of(noteSnapshot));
       when(noteSnapshot.getContent()).thenReturn(CONTENT);
+
+      when(noteSnapshot.getPasswordHash()).thenReturn(null);
 
       List<NoteDTO> response = underTest.getAllNotes(null, null, null);
 
@@ -136,6 +189,19 @@ class NoteServiceTest {
               noteSnapshot.getContent(),
               note.getCreatedAt(),
               note.getUpdatedAt());
+    }
+
+    @Test
+    void getAllNotes_whenNoteIsPasswordProtected_thenSkipped() {
+      when(noteRepository.findAllByTitleContainingIgnoreCaseAndActive("", true))
+          .thenReturn(List.of(note));
+      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
+          .thenReturn(Optional.of(noteSnapshot));
+      when(noteSnapshot.getPasswordHash()).thenReturn("hash");
+
+      List<NoteDTO> result = underTest.getAllNotes(null, null, null);
+
+      assertThat(result).isEmpty();
     }
 
     @Test
@@ -233,11 +299,12 @@ class NoteServiceTest {
             TEST_NOTE,
             CONTENT,
             Instant.now().minus(2, MINUTES),
-            Instant.now().minus(1, MINUTES));
+            Instant.now().minus(1, MINUTES),
+            null);
 
     @Test
     void noteNotFound_throwsNotFoundException() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT, null);
 
       assertThatCode(() -> underTest.updateNote(ID, updateRequest))
           .isExactlyInstanceOf(NoteNotFoundException.class);
@@ -245,7 +312,7 @@ class NoteServiceTest {
 
     @Test
     void noteNotActive_throwsNotFoundException() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT, null);
       var note = TEST_NOTE.withActive(false);
 
       when(noteRepository.findById(any())).thenReturn(Optional.of(note));
@@ -259,7 +326,7 @@ class NoteServiceTest {
       var newTile = TITLE + "new";
       var now = Instant.now();
 
-      var updateRequest = new CreateNoteRequest(newTile, CONTENT);
+      var updateRequest = new CreateNoteRequest(newTile, CONTENT, null);
 
       when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
@@ -280,7 +347,7 @@ class NoteServiceTest {
 
     @Test
     void noChangesInTitle() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT, null);
 
       when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
@@ -303,7 +370,7 @@ class NoteServiceTest {
 
     @Test
     void noLatestSnapshot() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT, null);
       var now = Instant.now();
 
       when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
@@ -326,7 +393,7 @@ class NoteServiceTest {
       var newContent = CONTENT + "new";
       var now = Instant.now();
 
-      var updateRequest = new CreateNoteRequest(TITLE, newContent);
+      var updateRequest = new CreateNoteRequest(TITLE, newContent, null);
 
       when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
@@ -345,7 +412,7 @@ class NoteServiceTest {
 
     @Test
     void noChangesInContent() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+      var updateRequest = new CreateNoteRequest(TITLE, CONTENT, null);
 
       when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
       when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
