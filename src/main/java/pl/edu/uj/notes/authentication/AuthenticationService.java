@@ -2,8 +2,12 @@ package pl.edu.uj.notes.authentication;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,7 +17,7 @@ import pl.edu.uj.notes.user.UserEntity;
 
 @Component
 @RequiredArgsConstructor
-class AuthenticationService implements UserDetailsService {
+class AuthenticationService implements UserDetailsService, PrincipalService {
 
   private final InternalUserService userService;
 
@@ -26,12 +30,33 @@ class AuthenticationService implements UserDetailsService {
 
     return new UserDetailsAdapter(user.get());
   }
+
+  @Override
+  public UserEntity fetchCurrentUser() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+    if (authentication == null) {
+      var msg = "User not authenticated";
+      throw new NotAuthenticatedException(msg);
+    }
+
+    Optional<UserEntity> currentUser = userService.getUserByUsername(authentication.getName());
+    if (currentUser.isEmpty()) {
+      var msg = "Failed to get user for " + authentication.getName();
+      throw new NoUserForAuthenticatedPrincipalException(msg);
+    }
+
+    return currentUser.get();
+  }
 }
 
 record UserDetailsAdapter(UserEntity user) implements UserDetails {
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
+    if (user.isAdmin()) {
+      return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    }
     return List.of();
   }
 
@@ -43,5 +68,10 @@ record UserDetailsAdapter(UserEntity user) implements UserDetails {
   @Override
   public String getUsername() {
     return user.getUsername();
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return !user.isBlocked();
   }
 }

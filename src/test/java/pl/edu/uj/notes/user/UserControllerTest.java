@@ -2,8 +2,7 @@ package pl.edu.uj.notes.user;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.DisplayName;
@@ -61,5 +60,74 @@ class UserControllerTest {
     mockMvc
         .perform(put(USER_URI + "/password").contentType(MediaType.APPLICATION_JSON).content(json))
         .andExpect(status().isNoContent());
+  }
+
+  @WithMockUser
+  @Test
+  void whenCorrectDeleteRequest_thenNoContent() throws Exception {
+    String json =
+        """
+            {
+              "id": "123e4567-e89b-12d3-a456-426614174000"
+            }
+            """;
+
+    doNothing().when(userService).deleteUser(any());
+
+    mockMvc
+        .perform(
+            delete(USER_URI + "/123e4567-e89b-12d3-a456-426614174000")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isNoContent());
+  }
+
+  @WithMockUser(roles = "ADMIN")
+  @Test
+  void whenAdminBlocksUser_thenReturnNoContent() throws Exception {
+    String json =
+        """
+      {
+        "userId": "some-user-id",
+        "block": true
+      }
+      """;
+
+    doNothing().when(userService).setUserBlockedStatus(any());
+
+    mockMvc
+        .perform(put(USER_URI + "/block").contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isNoContent());
+  }
+
+  @WithMockUser(roles = "USER")
+  @Test
+  void whenUserTriesToBlockUser_thenForbidden() throws Exception {
+    String json =
+        """
+      {
+        "userId": "some-user-id",
+        "block": true
+      }
+      """;
+
+    mockMvc
+        .perform(put(USER_URI + "/block").contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isForbidden());
+  }
+
+  @WithMockUser(roles = "ADMIN")
+  @Test
+  void whenRequestMissingUserId_thenBadRequest() throws Exception {
+    String json =
+        """
+      {
+        "block": true
+      }
+      """;
+
+    mockMvc
+        .perform(put(USER_URI + "/block").contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isBadRequest());
   }
 }

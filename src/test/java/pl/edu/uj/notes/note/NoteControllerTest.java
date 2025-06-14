@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -109,9 +110,7 @@ class NoteControllerTest {
             }
             """;
 
-    Mockito.doThrow(new NoteNotFoundException("Note with ID " + id + " does not exist"))
-        .when(noteService)
-        .deleteNote(deleteNoteRequest);
+    Mockito.doThrow(new NoteNotFoundException()).when(noteService).deleteNote(deleteNoteRequest);
 
     mockMvc
         .perform(delete(NOTE_URI).contentType(MediaType.APPLICATION_JSON).content(request))
@@ -183,6 +182,35 @@ class NoteControllerTest {
           .andExpect(status().isAccepted());
 
       verify(noteService).updateNote(any(), any());
+    }
+  }
+
+  @Nested
+  class markAsImportant {
+
+    @Test
+    @WithMockUser
+    void success_statusNoContent() throws Exception {
+      mockMvc
+          .perform(
+              org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch(
+                  NOTE_URI + "/noteId/important"))
+          .andExpect(status().isNoContent());
+
+      verify(noteService).markAsImportant("noteId");
+    }
+
+    @Test
+    @WithMockUser
+    void noteNotFound_returnsNotFound() throws Exception {
+      String id = "nonExistingId";
+
+      Mockito.doThrow(new NoteNotFoundException()).when(noteService).markAsImportant(id);
+
+      mockMvc
+          .perform(
+              patch(NOTE_URI + "/" + id + "/important").contentType(MediaType.APPLICATION_JSON))
+          .andExpect(status().isNotFound());
     }
   }
 }

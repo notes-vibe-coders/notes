@@ -1,0 +1,33 @@
+### Search by title
+GET localhost:8080/api/v1/notes?title=title
+Authorization: Basic workflow-user workflow-user
+
+### Search by content
+GET localhost:8080/api/v1/notes?content=original%20content
+Authorization: Basic workflow-user workflow-user
+
+### Create an important note
+POST localhost:8080/api/v1/notes
+Authorization: Basic workflow-user workflow-user
+Content-Type: application/json
+
+{
+  "title": "important note",
+  "content": "This note is important and should be marked as such."
+}
+> {% client.global.set("noteId", response.headers.valueOf("Location").split("/").pop()); %}
+
+### Marking a note as important
+PATCH localhost:8080/api/v1/notes/{{noteId}}/important
+Authorization: Basic workflow-user workflow-user
+
+### Search for not important notes
+GET localhost:8080/api/v1/notes?important=false
+Authorization: Basic workflow-user workflow-user
+
+### Search for important notes
+GET localhost:8080/api/v1/notes?important=true
+Authorization: Basic workflow-user workflow-user
+
+
+

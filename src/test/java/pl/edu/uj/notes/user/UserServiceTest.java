@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.authorization.AccessControlService;
@@ -21,6 +22,7 @@ import pl.edu.uj.notes.user.exception.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(SecurityConfig.class)
+@ActiveProfiles("test")
 public class UserServiceTest {
 
   private static final String USERNAME = "username";
@@ -189,6 +191,34 @@ public class UserServiceTest {
       var exception =
           assertThrows(UserNotFoundException.class, () -> userService.updatePassword(request));
       assertEquals("User not found", exception.getMessage());
+    }
+
+    @Test
+    void whenUserDoesNotHaveWritePermissions_thenThrowUnauthorizedUserAccessException() {
+      // Given
+      when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+      when(accessControlService.userHasAccessTo(any(), any())).thenReturn(false);
+
+      UserEntity user = new UserEntity(USERNAME, ENCODED_PASSWORD);
+      userRepository.save(user);
+      String userId = user.getId();
+
+      String newPassword = "newSecret123";
+      String encodedNewPassword = "encodedNewPassword";
+      when(passwordEncoder.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
+      when(passwordEncoder.encode(newPassword)).thenReturn(encodedNewPassword);
+
+      UpdatePasswordRequest request = new UpdatePasswordRequest();
+      request.setUserId(userId);
+      request.setOldPassword(PASSWORD);
+      request.setNewPassword(newPassword);
+
+      // When & Then
+      var exception =
+          assertThrows(
+              UnauthorizedUserAccessException.class, () -> userService.updatePassword(request));
+      assertEquals(
+          "You are not allowed to update user " + request.getUserId(), exception.getMessage());
     }
   }
 

@@ -64,4 +64,45 @@
     <loadData tableName="user_entity" file="classpath:db/admin.csv"/>
   </changeSet>
 
+  <changeSet id="8" author="wzdeb">
+    <addColumn tableName="note">
+      <column name="important" type="boolean" defaultValueBoolean="false"/>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="9" author="prusnarczyk">
+    <addColumn tableName="note">
+      <column name="owner_id" type="varchar">
+        <constraints foreignKeyName="owner_id" references="user_entity(id)"/>
+      </column>
+    </addColumn>
+  </changeSet>
+  
+  <changeSet id="10" author="bstachow">
+    <addColumn tableName="user_entity">
+      <column name="is_blocked" type="boolean" defaultValueBoolean="false"/>
+    </addColumn>
+  </changeSet>
+  
+  <changeSet id="1749757072773-1" author="ksikora">
+    <createTable tableName="category">
+      <column name="id" type="varchar">
+        <constraints primaryKey="true"/>
+      </column>
+      <column name="name" type="varchar"/>
+    </createTable>
+  </changeSet>
+  
+  <changeSet id="1749757072773-2" author="ksikora">
+    <createTable tableName="category_notes">
+      <column name="category_id" type="varchar">
+        <constraints primaryKey="true" references="category(id)" foreignKeyName="fk_category_notes_category"/>
+      </column>
+      <column name="notes_id" type="varchar">
+        <constraints primaryKey="true" references="note(id)" foreignKeyName="fk_category_notes_note"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+
 </databaseChangeLog>

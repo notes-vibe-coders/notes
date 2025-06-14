@@ -64,6 +64,16 @@ public class UserService {
     userRepository.save(user);
   }
 
+  public void setUserBlockedStatus(BlockUserRequest request) {
+    UserEntity user =
+        userRepository
+            .findById(request.getUserId())
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+    user.setBlocked(request.isBlock());
+    userRepository.save(user);
+  }
+
   public List<String> viewUsers(ViewUsersRequest request) {
     List<UserEntity> users = userRepository.findAllById(request.getIdList());
     if (users.isEmpty()) {

@@ -34,8 +34,9 @@ class NoteController {
   @ResponseStatus(HttpStatus.OK)
   ResponseEntity<List<NoteDTO>> getAllNotes(
       @RequestParam(required = false) String title,
-      @RequestParam(required = false) String content) {
-    return ResponseEntity.ok(noteService.getAllNotes(title, content));
+      @RequestParam(required = false) String content,
+      @RequestParam(required = false) Boolean important) {
+    return ResponseEntity.ok(noteService.getAllNotes(title, content, important));
   }
 
   @DeleteMapping
@@ -50,5 +51,12 @@ class NoteController {
   ResponseEntity<NoteDTO> updateNote(
       @PathVariable @NotBlank String id, @Validated @RequestBody CreateNoteRequest request) {
     return ResponseEntity.accepted().body(noteService.updateNote(id, request));
+  }
+
+  @PatchMapping("/{id}/important")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  ResponseEntity<Void> markAsImportant(@PathVariable @NotBlank String id) {
+    noteService.markAsImportant(id);
+    return ResponseEntity.noContent().build();
   }
 }

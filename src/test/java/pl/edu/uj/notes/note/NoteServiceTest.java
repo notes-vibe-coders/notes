@@ -1,322 +1,297 @@
 package pl.edu.uj.notes.note;
 
-import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
-import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
+import pl.edu.uj.notes.note.exception.UnauthorizedNoteAccessException;
+import pl.edu.uj.notes.user.CreateUserRequest;
+import pl.edu.uj.notes.user.UserEntity;
+import pl.edu.uj.notes.user.UserService;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@Transactional
 class NoteServiceTest {
 
-  String TITLE = "testTitle";
-  String CONTENT = "testContent";
-  String NOTE_ID = "noteId";
-  String ID = "testId";
+  @Autowired NoteService underTest;
+  @Autowired NoteRepository noteRepository;
+  @Autowired NoteSnapshotRepository noteSnapshotRepository;
+  @Autowired UserService userService;
 
-  @Mock NoteSnapshotRepository noteSnapshotRepository;
-  @Mock NoteRepository noteRepository;
-  @InjectMocks NoteService underTest;
+  UserEntity owner;
+  UserEntity otherUser;
+  Note ownerNote;
+  Note otherUserNote;
+  NoteSnapshot ownerNoteSnapshot;
+  NoteSnapshot otherUserNoteSnapshot;
 
-  @Mock Note note;
-  @Mock NoteSnapshot noteSnapshot;
+  @BeforeEach
+  void setUp() {
+    noteSnapshotRepository.deleteAll();
+    noteRepository.deleteAll();
+
+    owner = createAndGetUser("owner", "password");
+    otherUser = createAndGetUser("other", "password");
+
+    ownerNote = noteRepository.save(new Note("First Note", owner));
+    otherUserNote = noteRepository.save(new Note("Second Note", otherUser).withImportant(true));
+
+    ownerNoteSnapshot = noteSnapshotRepository.save(new NoteSnapshot(ownerNote, "First content"));
+    otherUserNoteSnapshot =
+        noteSnapshotRepository.save(new NoteSnapshot(otherUserNote, "Second content"));
+
+    setCurrentUser(owner);
+  }
+
+  UserEntity createAndGetUser(String username, String password) {
+    String userId = userService.createUser(new CreateUserRequest(username, password));
+    return new UserEntity(username, password).withId(userId);
+  }
+
+  void setCurrentUser(UserEntity user) {
+    Authentication auth =
+        new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
+    SecurityContext context = SecurityContextHolder.createEmptyContext();
+    context.setAuthentication(auth);
+    SecurityContextHolder.setContext(context);
+  }
 
   @Nested
-  class createNote {
-
-    @Captor ArgumentCaptor<Note> noteArgumentCaptor;
-    @Captor ArgumentCaptor<NoteSnapshot> noteSnapshotArgumentCaptor;
+  class CreateNote {
 
     @Test
-    void createNoteShouldCreateNoteAndSnapshot() {
-      var createNoteRequest = new CreateNoteRequest(TITLE, CONTENT);
-
-      when(noteSnapshotRepository.save(any())).thenReturn(noteSnapshot);
-      when(noteRepository.save(any())).thenReturn(note);
-
-      underTest.createNote(createNoteRequest);
-
-      verify(noteRepository).save(noteArgumentCaptor.capture());
-      verify(noteSnapshotRepository).save(noteSnapshotArgumentCaptor.capture());
-
-      assertThat(noteArgumentCaptor.getValue().getTitle()).isEqualTo(TITLE);
-      assertThat(noteSnapshotArgumentCaptor.getValue())
-          .extracting(NoteSnapshot::getNoteId, NoteSnapshot::getContent)
-          .containsExactly(note, CONTENT);
+    void shouldThrowWhenCreatingNoteWithNullRequest() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.createNote(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
-    void createNoteReturnsId() {
-      var createNoteRequest = new CreateNoteRequest(TITLE, CONTENT);
+    void shouldCreateNewNoteWithSnapshotWhenValidRequest() {
+      setCurrentUser(owner);
+      var request = new CreateNoteRequest("New Note", "New Content");
 
-      when(noteSnapshotRepository.save(any())).thenReturn(noteSnapshot);
-      when(noteRepository.save(any())).thenReturn(note);
-      when(note.getId()).thenReturn(NOTE_ID);
+      String noteId = underTest.createNote(request);
 
-      var id = underTest.createNote(createNoteRequest);
+      var savedNote = noteRepository.findById(noteId).orElseThrow();
+      var savedSnapshot =
+          noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(savedNote).orElseThrow();
 
-      assertThat(id).isEqualTo(NOTE_ID);
+      assertThat(savedNote.getTitle()).isEqualTo("New Note");
+      assertThat(savedNote.getOwner())
+          .extracting(UserEntity::getId, UserEntity::getUsername)
+          .containsExactly(owner.getId(), owner.getUsername());
+      assertThat(savedSnapshot.getContent()).isEqualTo("New Content");
+      assertThat(savedSnapshot.getNoteId()).isEqualTo(savedNote);
     }
   }
 
   @Nested
-  class getNotes {
+  class UpdateNote {
 
     @Test
-    void getNoteById_thenReturnNote() {
-      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
-          .thenReturn(Optional.of(noteSnapshot));
-
-      NoteDTO response = underTest.getNote(NOTE_ID);
-
-      assertThat(response)
-          .extracting(
-              NoteDTO::id, NoteDTO::title, NoteDTO::content, NoteDTO::createdAt, NoteDTO::updatedAt)
-          .containsExactly(
-              note.getId(),
-              note.getTitle(),
-              noteSnapshot.getContent(),
-              note.getCreatedAt(),
-              note.getUpdatedAt());
+    void shouldThrowWhenUpdatingWithNullRequest() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.updateNote(ownerNote.getId(), null))
+          .isInstanceOf(NullPointerException.class);
     }
 
     @Test
-    void getNoteById_thenNoteNotFound() {
-      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.empty());
-
-      assertThrows(NoteNotFoundException.class, () -> underTest.getNote(NOTE_ID));
+    void shouldThrowWhenUpdatingWithNullId() {
+      setCurrentUser(owner);
+      var request = new CreateNoteRequest("Title", "Content");
+      assertThatThrownBy(() -> underTest.updateNote(null, request))
+          .isInstanceOf(NullPointerException.class);
     }
 
     @Test
-    void getNoteById_thenNoteSnapshotNotFound() {
-      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
-          .thenReturn(Optional.empty());
+    void shouldUpdateNoteTitleWhenTitleChanged() {
+      setCurrentUser(owner);
+      var request = new CreateNoteRequest("Updated Title", ownerNoteSnapshot.getContent());
 
-      assertThrows(NoteSnapshotNotFoundException.class, () -> underTest.getNote(NOTE_ID));
+      var result = underTest.updateNote(ownerNote.getId(), request);
+
+      assertThat(result.title()).isEqualTo("Updated Title");
+      assertThat(result.content()).isEqualTo(ownerNoteSnapshot.getContent());
+
+      var updatedNote = noteRepository.findById(ownerNote.getId()).orElseThrow();
+      assertThat(updatedNote.getTitle()).isEqualTo("Updated Title");
     }
 
     @Test
-    void getAllNotes_thenReturnAllNotes() {
-      when(noteRepository.findAllByTitleContainingIgnoreCase("")).thenReturn(List.of(note));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
-          .thenReturn(Optional.of(noteSnapshot));
-      when(noteSnapshot.getContent()).thenReturn(CONTENT);
+    void shouldCreateNewSnapshotWhenContentUpdated() {
+      setCurrentUser(owner);
+      var request = new CreateNoteRequest(ownerNote.getTitle(), "Updated content");
 
-      List<NoteDTO> response = underTest.getAllNotes(null, null);
+      var result = underTest.updateNote(ownerNote.getId(), request);
 
-      verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase("");
-      verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
+      assertThat(result.title()).isEqualTo(ownerNote.getTitle());
+      assertThat(result.content()).isEqualTo("Updated content");
 
-      assertEquals(1, response.size());
-      assertThat(response.getFirst())
-          .extracting(
-              NoteDTO::id, NoteDTO::title, NoteDTO::content, NoteDTO::createdAt, NoteDTO::updatedAt)
-          .containsExactly(
-              note.getId(),
-              note.getTitle(),
-              noteSnapshot.getContent(),
-              note.getCreatedAt(),
-              note.getUpdatedAt());
+      var snapshots = noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(ownerNote);
+      assertThat(snapshots.get().getContent()).isEqualTo("Updated content");
     }
 
     @Test
-    void getAllNotesContainingTitleAndContent_thenReturnAllNotes() {
-      when(noteRepository.findAllByTitleContainingIgnoreCase(TITLE)).thenReturn(List.of(note));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(note))
-          .thenReturn(Optional.of(noteSnapshot));
-      when(noteSnapshot.getContent()).thenReturn(CONTENT);
+    void shouldThrowNoteNotFoundExceptionWhenUpdatingNonExistentNote() {
+      setCurrentUser(owner);
+      var request = new CreateNoteRequest("Title", "Content");
 
-      List<NoteDTO> response = underTest.getAllNotes(TITLE, CONTENT);
+      assertThatThrownBy(() -> underTest.updateNote("non-existent", request))
+          .isInstanceOf(NoteNotFoundException.class);
+    }
 
-      verify(noteRepository, times(1)).findAllByTitleContainingIgnoreCase(TITLE);
-      verify(noteSnapshotRepository, times(1)).findFirstByNoteIdOrderByCreatedAtDesc(note);
+    @Test
+    void shouldThrowUnauthorizedNoteAccessExceptionWhenUpdatingOthersNote() {
+      setCurrentUser(otherUser);
+      var request = new CreateNoteRequest("Title", "Content");
 
-      assertEquals(1, response.size());
-      assertThat(response.getFirst())
-          .extracting(
-              NoteDTO::id, NoteDTO::title, NoteDTO::content, NoteDTO::createdAt, NoteDTO::updatedAt)
-          .containsExactly(
-              note.getId(),
-              note.getTitle(),
-              noteSnapshot.getContent(),
-              note.getCreatedAt(),
-              note.getUpdatedAt());
+      assertThatThrownBy(() -> underTest.updateNote(ownerNote.getId(), request))
+          .isInstanceOf(UnauthorizedNoteAccessException.class);
     }
   }
 
   @Nested
-  class deleteNote {
+  class DeleteNote {
 
     @Test
-    void deleteNoteDeactivatesExistingNote() {
-      var deleteNoteRequest = new DeleteNoteRequest(ID);
+    void shouldMarkNoteAsInactiveWhenDeleting() {
+      setCurrentUser(owner);
+      underTest.deleteNote(new DeleteNoteRequest(ownerNote.getId()));
 
-      when(noteRepository.findById(ID)).thenReturn(Optional.of(note));
-
-      underTest.deleteNote(deleteNoteRequest);
-
-      verify(note).setActive(false);
-      verify(noteRepository).save(note);
-
-      assertThat(note.isActive()).isFalse();
+      var deletedNote = noteRepository.findById(ownerNote.getId()).orElseThrow();
+      assertThat(deletedNote.isActive()).isFalse();
     }
 
     @Test
-    void deleteNoteThrowsExceptionWhenNoteDoesNotExist() {
-      var deleteNoteRequest = new DeleteNoteRequest(ID);
+    void shouldThrowNoteNotFoundExceptionWhenDeletingNonExistentNote() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.deleteNote(new DeleteNoteRequest("non-existent")))
+          .isInstanceOf(NoteNotFoundException.class);
+    }
 
-      when(noteRepository.findById(ID)).thenReturn(Optional.empty());
-
-      NoteNotFoundException e =
-          assertThrows(NoteNotFoundException.class, () -> underTest.deleteNote(deleteNoteRequest));
-
-      assertThat(e.getMessage()).isEqualTo("Note with ID " + ID + " does not exist");
+    @Test
+    void shouldThrowUnauthorizedNoteAccessExceptionWhenDeletingOthersNote() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.deleteNote(new DeleteNoteRequest(otherUserNote.getId())))
+          .isInstanceOf(UnauthorizedNoteAccessException.class);
     }
   }
 
   @Nested
-  class updateNote {
-
-    Note TEST_NOTE =
-        new Note(
-            ID, TITLE, Instant.now().minus(10, MINUTES), Instant.now().minus(5, MINUTES), true);
-    NoteSnapshot TEST_SNAPSHOT =
-        new NoteSnapshot(
-            ID,
-            TEST_NOTE,
-            CONTENT,
-            Instant.now().minus(2, MINUTES),
-            Instant.now().minus(1, MINUTES));
+  class GetNote {
 
     @Test
-    void noteNotFound_throwsNotFoundException() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
-
-      assertThatCode(() -> underTest.updateNote(ID, updateRequest))
-          .isExactlyInstanceOf(NoteNotFoundException.class);
+    void shouldThrowWhenGettingNoteWithNullId() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.getNote(null)).isInstanceOf(NullPointerException.class);
     }
 
     @Test
-    void noteNotActive_throwsNotFoundException() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
-      var note = TEST_NOTE.withActive(false);
+    void shouldReturnNoteWithLatestSnapshotWhenNoteExists() {
+      setCurrentUser(owner);
+      var result = underTest.getNote(ownerNote.getId());
 
-      when(noteRepository.findById(any())).thenReturn(Optional.of(note));
-
-      assertThatCode(() -> underTest.updateNote(ID, updateRequest))
-          .isExactlyInstanceOf(NoteNotFoundException.class);
+      assertThat(result.id()).isEqualTo(ownerNote.getId());
+      assertThat(result.title()).isEqualTo(ownerNote.getTitle());
+      assertThat(result.content()).isEqualTo(ownerNoteSnapshot.getContent());
     }
 
     @Test
-    void titleUpdated(@Captor ArgumentCaptor<Note> captor) {
-      var newTile = TITLE + "new";
-      var now = Instant.now();
-
-      var updateRequest = new CreateNoteRequest(newTile, CONTENT);
-
-      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
-          .thenReturn(Optional.of(TEST_SNAPSHOT));
-      when(noteRepository.save(any())).thenReturn(TEST_NOTE.withTitle(newTile).withUpdatedAt(now));
-
-      var result = underTest.updateNote(ID, updateRequest);
-
-      assertThat(result)
-          .isEqualTo(new NoteDTO(ID, newTile, CONTENT, TEST_NOTE.getCreatedAt(), now));
-
-      verify(noteRepository).save(captor.capture());
-
-      assertThat(captor.getValue()).extracting(Note::getTitle).isEqualTo(newTile);
+    void shouldThrowNoteNotFoundExceptionWhenNoteDoesNotExist() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.getNote("non-existent"))
+          .isInstanceOf(NoteNotFoundException.class);
     }
 
     @Test
-    void noChangesInTitle() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+    void shouldThrowUnauthorizedNoteAccessExceptionWhenGettingOthersNote() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.getNote(otherUserNote.getId()))
+          .isInstanceOf(UnauthorizedNoteAccessException.class);
+    }
+  }
 
-      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
-          .thenReturn(Optional.of(TEST_SNAPSHOT));
+  @Nested
+  class GetAllNotes {
 
-      var result = underTest.updateNote(ID, updateRequest);
+    @Test
+    void shouldReturnOnlyNotesOwnedByCurrentUserWhenNoFiltersApplied() {
+      setCurrentUser(owner);
+      var results = underTest.getAllNotes(null, null, null);
 
-      assertThat(result)
-          .isEqualTo(
-              new NoteDTO(
-                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), TEST_SNAPSHOT.getUpdatedAt()));
-
-      verify(noteRepository, never()).save(any());
+      assertThat(results).hasSize(1);
+      assertThat(results.get(0).id()).isEqualTo(ownerNote.getId());
     }
 
     @Test
-    void noLatestSnapshot() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
-      var now = Instant.now();
+    void shouldFilterNotesByTitleWhenTitleFilterProvided() {
+      setCurrentUser(owner);
+      var results = underTest.getAllNotes("First", null, null);
 
-      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
-          .thenReturn(Optional.empty());
-      when(noteSnapshotRepository.save(any())).thenReturn(TEST_SNAPSHOT.withUpdatedAt(now));
-
-      var result = underTest.updateNote(ID, updateRequest);
-
-      assertThat(result).isEqualTo(new NoteDTO(ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now));
-
-      verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, CONTENT));
+      assertThat(results).hasSize(1);
+      assertThat(results.get(0).id()).isEqualTo(ownerNote.getId());
     }
 
     @Test
-    void contentUpdated() {
-      var newContent = CONTENT + "new";
-      var now = Instant.now();
+    void shouldFilterNotesByContentWhenContentFilterProvided() {
+      setCurrentUser(owner);
+      var results = underTest.getAllNotes(null, "First", null);
 
-      var updateRequest = new CreateNoteRequest(TITLE, newContent);
-
-      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
-          .thenReturn(Optional.of(TEST_SNAPSHOT));
-      when(noteSnapshotRepository.save(any())).thenReturn(TEST_SNAPSHOT.withUpdatedAt(now));
-
-      var result = underTest.updateNote(ID, updateRequest);
-
-      assertThat(result).isEqualTo(new NoteDTO(ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), now));
-
-      verify(noteSnapshotRepository).save(new NoteSnapshot(TEST_NOTE, newContent));
+      assertThat(results).hasSize(1);
+      assertThat(results.get(0).id()).isEqualTo(ownerNote.getId());
     }
 
     @Test
-    void noChangesInContent() {
-      var updateRequest = new CreateNoteRequest(TITLE, CONTENT);
+    void shouldFilterNotesByImportantFlagWhenImportantFilterTrue() {
+      setCurrentUser(otherUser);
+      var results = underTest.getAllNotes(null, null, true);
 
-      when(noteRepository.findById(any())).thenReturn(Optional.of(TEST_NOTE));
-      when(noteSnapshotRepository.findFirstByNoteIdOrderByCreatedAtDesc(any()))
-          .thenReturn(Optional.of(TEST_SNAPSHOT));
+      assertThat(results).hasSize(1);
+      assertThat(results.get(0).id()).isEqualTo(otherUserNote.getId());
+    }
+  }
 
-      var result = underTest.updateNote(ID, updateRequest);
+  @Nested
+  class MarkAsImportant {
 
-      assertThat(result)
-          .isEqualTo(
-              new NoteDTO(
-                  ID, TITLE, CONTENT, TEST_NOTE.getCreatedAt(), TEST_SNAPSHOT.getUpdatedAt()));
+    @Test
+    void shouldThrowWhenMarkingNoteAsImportantWithNullId() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.markAsImportant(null))
+          .isInstanceOf(NullPointerException.class);
+    }
 
-      verify(noteSnapshotRepository, never()).save(any());
+    @Test
+    void shouldSetImportantFlagWhenMarkingNoteAsImportant() {
+      setCurrentUser(owner);
+      underTest.markAsImportant(ownerNote.getId());
+
+      var updatedNote = noteRepository.findById(ownerNote.getId()).orElseThrow();
+      assertThat(updatedNote.isImportant()).isTrue();
+    }
+
+    @Test
+    void shouldThrowUnauthorizedNoteAccessExceptionWhenMarkingOthersNoteAsImportant() {
+      setCurrentUser(otherUser);
+      assertThatThrownBy(() -> underTest.markAsImportant(ownerNote.getId()))
+          .isInstanceOf(UnauthorizedNoteAccessException.class);
+    }
+
+    @Test
+    void shouldThrowNoteNotFoundExceptionWhenMarkingNonExistentNoteAsImportant() {
+      setCurrentUser(owner);
+      assertThatThrownBy(() -> underTest.markAsImportant("non-existent"))
+          .isInstanceOf(NoteNotFoundException.class);
     }
   }
 }
