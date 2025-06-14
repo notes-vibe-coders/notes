@@ -18,7 +18,7 @@ class SnapshotService {
   List<SnapshotDTO> getSnapshotsByNoteId(String noteId) {
     Optional<Note> note = noteRepository.findById(noteId);
     if (note.isEmpty()) {
-      throw new NoteNotFoundException("Note not found");
+      throw new NoteNotFoundException();
     }
 
     List<NoteSnapshot> snapshots = snapshotRepository.findAllByNoteId(note.get());
@@ -29,12 +29,12 @@ class SnapshotService {
   SnapshotDTO restoreSnapshot(String noteId, String snapshotId) {
     Optional<Note> note = noteRepository.findById(noteId);
     if (note.isEmpty()) {
-      throw new NoteNotFoundException("Note not found");
+      throw new NoteNotFoundException();
     }
 
     Optional<NoteSnapshot> snapshot = snapshotRepository.findById(snapshotId);
     if (snapshot.isEmpty()) {
-      throw new NoteSnapshotNotFoundException("Snapshot not found");
+      throw new NoteSnapshotNotFoundException();
     }
 
     NoteSnapshot actual = snapshot.get();
