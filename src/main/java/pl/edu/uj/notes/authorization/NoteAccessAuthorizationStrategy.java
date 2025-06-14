@@ -11,6 +11,10 @@ public class NoteAccessAuthorizationStrategy implements AuthorizationStrategy<No
   @Override
   public boolean hasAccessTo(
       @NonNull UserEntity subject, @NonNull Note resource, @NonNull Action action) {
+    if (subject.isAdmin() && Action.READ.equals(action)) {
+      return true;
+    }
+
     return subject.getId().equals(resource.getOwner().getId());
   }
 }
