@@ -7,8 +7,25 @@ Content-Type: application/json
   "title": "Admin Note",
   "content": "This note is created by an admin user."
 }
+> {% client.global.set("adminNoteId", response.headers.valueOf("Location").split("/").pop()); %}
 
-### Try accesing admin note as workflow user FIXME: SHOULD FAIL BUT SHOWS ADMIN NOTE
-GET localhost:8080/api/v1/notes?title=Admin%20Note
+### Create workflow user note
+POST localhost:8080/api/v1/notes
 Authorization: Basic workflow-user workflow-user
+Content-Type: application/json
+
+{
+  "title": "Workflow User Note",
+  "content": "This note is created by a workflow user."
+}
+> {% client.global.set("userNoteId", response.headers.valueOf("Location").split("/").pop()); %}
+
+### Try accesing admin note as workflow user
+GET localhost:8080/api/v1/notes/{{adminNoteId}}
+Authorization: Basic workflow-user workflow-user
+
+### Try accesing admin note as an admin user
+GET localhost:8080/api/v1/notes/{{userNoteId}}
+Authorization: Basic admin admin
+
 
