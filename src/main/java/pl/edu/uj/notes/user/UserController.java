@@ -2,7 +2,7 @@ package pl.edu.uj.notes.user;
 
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,8 +41,8 @@ class UserController {
   }
 
   @GetMapping()
-  ResponseEntity<List<String>> viewUsers(@Valid @RequestBody ViewUsersRequest request) {
-    List<String> usernames = userService.viewUsers(request);
+  ResponseEntity<Map<String, String>> viewUsers(@Valid @RequestBody ViewUsersRequest request) {
+    Map<String, String> usernames = userService.viewUsers(request);
     return ResponseEntity.ok(usernames);
   }
 }

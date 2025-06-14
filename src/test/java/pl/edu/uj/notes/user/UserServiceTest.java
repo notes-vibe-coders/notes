@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -235,11 +236,11 @@ public class UserServiceTest {
           ViewUsersRequest.builder().idList(List.of(userId)).build();
 
       // When
-      List<String> usernames = userService.viewUsers(viewUsersRequest);
+      Map<String, String> usernamesAndIds = userService.viewUsers(viewUsersRequest);
 
       // Then
-      assertEquals(1, usernames.size());
-      assertEquals(USERNAME, usernames.getFirst());
+      assertEquals(1, usernamesAndIds.size());
+      assertEquals(USERNAME, usernamesAndIds.get(userId));
     }
 
     @Test

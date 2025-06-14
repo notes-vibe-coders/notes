@@ -1,6 +1,7 @@
 package pl.edu.uj.notes.user;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -74,16 +75,16 @@ public class UserService {
     userRepository.save(user);
   }
 
-  public List<String> viewUsers(ViewUsersRequest request) {
+  public Map<String, String> viewUsers(ViewUsersRequest request) {
     List<UserEntity> users = userRepository.findAllById(request.getIdList());
     if (users.isEmpty()) {
       String message = String.format("Users '%s' not found", request.getIdList());
       throw new UsersNotFoundException(message);
     }
-    return getUsernames(users);
+    return getUsernamesAndIds(users);
   }
 
-  private static List<String> getUsernames(List<UserEntity> users) {
-    return users.stream().map(UserEntity::getUsername).collect(Collectors.toList());
+  private static Map<String, String> getUsernamesAndIds(List<UserEntity> users) {
+    return users.stream().collect(Collectors.toMap(UserEntity::getId, UserEntity::getUsername));
   }
 }
