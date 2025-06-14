@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.category.exception.CategoryNotFoundException;
-import pl.edu.uj.notes.note.Note;
 import pl.edu.uj.notes.note.NoteService;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)

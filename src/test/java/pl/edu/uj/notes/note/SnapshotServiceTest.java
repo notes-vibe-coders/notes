@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.note.exception.NoteNotFoundException;
-import pl.edu.uj.notes.note.exception.NoteSnapshotNotFoundException;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(SecurityConfig.class)
@@ -100,9 +99,9 @@ public class SnapshotServiceTest {
 
       // When & Then
       NoteNotFoundException ex =
-              assertThrows(
-                      NoteNotFoundException.class,
-                      () -> snapshotService.restoreSnapshot(NOTE_ID, SNAPSHOT_ID));
+          assertThrows(
+              NoteNotFoundException.class,
+              () -> snapshotService.restoreSnapshot(NOTE_ID, SNAPSHOT_ID));
 
       assertEquals("Note not found", ex.getMessage());
     }
