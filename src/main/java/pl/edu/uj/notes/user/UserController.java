@@ -42,7 +42,7 @@ class UserController {
 
   @GetMapping()
   @PreAuthorize("hasRole('ADMIN')")
-  ResponseEntity<Map<String, String>> viewUsers(@Valid @RequestBody ViewUsersRequest request) {
+  ResponseEntity<Map<String, String>> viewUsers(@RequestBody ViewUsersRequest request) {
     Map<String, String> usernames = userService.viewUsers(request);
     return ResponseEntity.ok(usernames);
   }
