@@ -137,8 +137,8 @@ class AuthenticationServiceTest {
     var userDetails = underTest.loadUserByUsername(user.getUsername());
 
     assertThat(userDetails.getAuthorities())
-      .extracting(Object::toString)
-      .containsExactly("ROLE_ADMIN");
+        .extracting(Object::toString)
+        .containsExactly("ROLE_ADMIN");
   }
 
   @Test
