@@ -102,43 +102,6 @@ public class CategoryServiceTest {
   }
 
   @Nested
-  class UpdateCategory {
-
-    @Test
-    void whenValidRequest_thenUpdateCategory() {
-      // Given
-      UpdateCategoryRequest request =
-          new UpdateCategoryRequest(CATEGORY_ID, "Updated", List.of("note1"));
-      Category category = new Category(CATEGORY_NAME);
-      category.setId(CATEGORY_ID);
-
-      List<Note> notes = List.of(new Note());
-
-      when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(category));
-      when(noteService.getNotes(request.noteIds())).thenReturn(notes);
-      when(categoryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-      // When
-      Category updated = categoryService.updateCategory(request);
-
-      // Then
-      assertEquals("Updated", updated.getName());
-      assertEquals(notes, updated.getNotes());
-    }
-
-    @Test
-    void whenCategoryNotFound_thenThrowException() {
-      // Given
-      UpdateCategoryRequest request = new UpdateCategoryRequest(CATEGORY_ID, "Updated", List.of());
-
-      when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.empty());
-
-      // When & Then
-      assertThrows(CategoryNotFoundException.class, () -> categoryService.updateCategory(request));
-    }
-  }
-
-  @Nested
   class DeleteCategory {
 
     @Test

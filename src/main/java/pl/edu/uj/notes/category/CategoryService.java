@@ -39,16 +39,16 @@ public class CategoryService {
     return new CategoryDTO(category.getId(), category.getName(), noteDTOs);
   }
 
-  Category updateCategory(UpdateCategoryRequest request) {
-    Category category =
-        categoryRepository.findById(request.id()).orElseThrow(CategoryNotFoundException::new);
+  CategoryDTO updateCategory(String id, UpdateCategoryRequest request) {
+    Category category = categoryRepository.findById(id).orElseThrow(CategoryNotFoundException::new);
 
     List<String> noteIds = request.noteIds();
     List<Note> notes = noteService.getNotes(noteIds);
 
     category.setName(request.name());
     category.setNotes(notes);
-    return categoryRepository.save(category);
+    categoryRepository.save(category);
+    return new CategoryDTO(category.getId(), category.getName(), noteService.getNoteDTOs(notes));
   }
 
   void deleteCategory(String id) {

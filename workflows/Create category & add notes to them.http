@@ -1,0 +1,35 @@
+### Create a new category for notes
+POST localhost:8080/api/v1/categories
+Authorization: Basic workflow-user workflow-user
+Content-Type: application/json
+
+{
+  "name": "University",
+  "description": "Notes related to university courses and assignments"
+}
+> {% client.global.set("categoryId", response.headers.valueOf("Location").split("/").pop()); %}
+
+### Get the newly created category
+GET localhost:8080/api/v1/categories/{{categoryId}}
+Authorization: Basic workflow-user workflow-user
+
+### Create a new note
+POST localhost:8080/api/v1/notes
+Authorization: Basic workflow-user workflow-user
+Content-Type: application/json
+
+{
+  "title": "Assignment Reminder",
+  "content": "This note is about the upcoming assignment due next week."
+}
+> {% client.global.set("noteId", response.headers.valueOf("Location").split("/").pop()); %}
+
+### Add a note to the newly created category
+PUT localhost:8080/api/v1/categories/{{categoryId}}
+Authorization: Basic workflow-user workflow-user
+Content-Type: application/json
+
+{
+  "name": "University",
+  "noteIds": ["{{noteId}}"]
+}

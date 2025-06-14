@@ -1,0 +1,16 @@
+
+### Create our workflow user
+POST localhost:8080/api/v1/user
+Content-Type: application/json
+
+{
+  "username": "workflow-user",
+  "password": "workflow-user"
+}
+
+### This fails!
+GET localhost:8080/api/v1/notes
+
+### Because we need to use basic auth
+GET localhost:8080/api/v1/notes
+Authorization: Basic workflow-user workflow-user

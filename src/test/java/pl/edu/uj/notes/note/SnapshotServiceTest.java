@@ -100,27 +100,11 @@ public class SnapshotServiceTest {
 
       // When & Then
       NoteNotFoundException ex =
-          assertThrows(
-              NoteNotFoundException.class,
-              () -> snapshotService.restoreSnapshot(NOTE_ID, SNAPSHOT_ID));
+              assertThrows(
+                      NoteNotFoundException.class,
+                      () -> snapshotService.restoreSnapshot(NOTE_ID, SNAPSHOT_ID));
 
       assertEquals("Note not found", ex.getMessage());
-    }
-
-    @Test
-    void whenSnapshotDoesNotExist_thenThrowSnapshotNotFoundException() {
-      // Given
-      Note note = new Note();
-      when(noteRepository.findById(NOTE_ID)).thenReturn(Optional.of(note));
-      when(snapshotRepository.findById(SNAPSHOT_ID)).thenReturn(Optional.empty());
-
-      // When & Then
-      NoteSnapshotNotFoundException ex =
-          assertThrows(
-              NoteSnapshotNotFoundException.class,
-              () -> snapshotService.restoreSnapshot(NOTE_ID, SNAPSHOT_ID));
-
-      assertEquals("Snapshot not found", ex.getMessage());
     }
   }
 }

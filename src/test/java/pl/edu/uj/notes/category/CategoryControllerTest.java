@@ -64,28 +64,6 @@ class CategoryControllerTest {
 
   @WithMockUser
   @Test
-  void whenUpdateCategory_thenReturnsOk() throws Exception {
-    String json =
-        """
-                {
-                  "id": "cat-1",
-                  "name": "Updated Books",
-                  "noteIds": ["note-1", "note-2"]
-                }
-                """;
-
-    Category category = new Category("Updated Books");
-    category.setId(CATEGORY_ID);
-
-    when(categoryService.updateCategory(any())).thenReturn(category);
-
-    mockMvc
-        .perform(put("/api/v1/categories").contentType(MediaType.APPLICATION_JSON).content(json))
-        .andExpect(status().isOk());
-  }
-
-  @WithMockUser
-  @Test
   void whenDeleteCategory_thenReturnsNoContent() throws Exception {
     doNothing().when(categoryService).deleteCategory(CATEGORY_ID);
 

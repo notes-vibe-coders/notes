@@ -1,0 +1,36 @@
+### Get notes
+GET localhost:8080/api/v1/notes
+Authorization: Basic workflow-user workflow-user
+
+### Create a note
+POST localhost:8080/api/v1/notes
+Authorization: Basic workflow-user workflow-user
+Content-Type: application/json
+
+{
+  "title": "title",
+  "content": "original content"
+}
+> {% client.global.set("noteId", response.headers.valueOf("Location").split("/").pop()); %}
+
+### Get a specific note
+GET localhost:8080/api/v1/notes/{{noteId}}
+Authorization: Basic workflow-user workflow-user
+
+### Update a specific note
+PUT localhost:8080/api/v1/notes/{{noteId}}
+Authorization: Basic workflow-user workflow-user
+Content-Type: application/json
+
+{
+  "title": "updated title",
+  "content": "updated content"
+}
+
+### Browse through snapshots of a specific note
+GET localhost:8080/api/v1/notes/{{noteId}}/snapshot
+Authorization: Basic workflow-user workflow-user
+
+### Revert to original snapshot of a specific note
+PATCH localhost:8080/api/v1/notes/{{noteId}}/snapshot/eddc16f9-6688-4da0-a5ff-c3c5eb342700
+Authorization: Basic workflow-user workflow-user
