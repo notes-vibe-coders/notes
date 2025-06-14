@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
@@ -17,10 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pl.edu.uj.notes.authentication.SecurityConfig;
 import pl.edu.uj.notes.authorization.AccessControlService;
-import pl.edu.uj.notes.user.exception.InvalidOldPasswordException;
-import pl.edu.uj.notes.user.exception.UnauthorizedUserAccessException;
-import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
-import pl.edu.uj.notes.user.exception.UserNotFoundException;
+import pl.edu.uj.notes.user.exception.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(SecurityConfig.class)
@@ -221,6 +220,38 @@ public class UserServiceTest {
               UnauthorizedUserAccessException.class, () -> userService.updatePassword(request));
       assertEquals(
           "You are not allowed to update user " + request.getUserId(), exception.getMessage());
+    }
+  }
+
+  @Nested
+  class ViewUsers {
+
+    @Test
+    void whenUserPresentInDatabase_thenReturnUsername() {
+      // Given
+      UserEntity user = new UserEntity(USERNAME, PASSWORD);
+      userRepository.save(user);
+      String userId = user.getId();
+      ViewUsersRequest viewUsersRequest =
+          ViewUsersRequest.builder().idList(List.of(userId)).build();
+
+      // When
+      Map<String, String> usernamesAndIds = userService.viewUsers(viewUsersRequest);
+
+      // Then
+      assertEquals(1, usernamesAndIds.size());
+      assertEquals(USERNAME, usernamesAndIds.get(userId));
+    }
+
+    @Test
+    void whenUserIsNotPresentInDatabase_thenThrowException() {
+      // Given
+      String fakeId = "fakeId";
+      ViewUsersRequest viewUsersRequest =
+          ViewUsersRequest.builder().idList(List.of(fakeId)).build();
+
+      // When & Then
+      assertThrows(UsersNotFoundException.class, () -> userService.viewUsers(viewUsersRequest));
     }
   }
 }

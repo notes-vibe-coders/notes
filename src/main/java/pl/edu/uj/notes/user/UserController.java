@@ -2,6 +2,7 @@ package pl.edu.uj.notes.user;
 
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,5 +38,12 @@ class UserController {
   public ResponseEntity<Void> blockUser(@Valid @RequestBody BlockUserRequest request) {
     userService.setUserBlockedStatus(request);
     return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping()
+  @PreAuthorize("hasRole('ADMIN')")
+  ResponseEntity<Map<String, String>> viewUsers(@Valid @RequestBody ViewUsersRequest request) {
+    Map<String, String> usernames = userService.viewUsers(request);
+    return ResponseEntity.ok(usernames);
   }
 }

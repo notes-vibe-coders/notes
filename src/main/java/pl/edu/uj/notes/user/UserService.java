@@ -1,5 +1,8 @@
 package pl.edu.uj.notes.user;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -9,6 +12,7 @@ import pl.edu.uj.notes.user.exception.InvalidOldPasswordException;
 import pl.edu.uj.notes.user.exception.UnauthorizedUserAccessException;
 import pl.edu.uj.notes.user.exception.UserAlreadyExistsException;
 import pl.edu.uj.notes.user.exception.UserNotFoundException;
+import pl.edu.uj.notes.user.exception.UsersNotFoundException;
 
 @Service
 @RequiredArgsConstructor
@@ -69,5 +73,18 @@ public class UserService {
 
     user.setBlocked(request.isBlock());
     userRepository.save(user);
+  }
+
+  public Map<String, String> viewUsers(ViewUsersRequest request) {
+    List<UserEntity> users = userRepository.findAllById(request.getIdList());
+    if (users.isEmpty()) {
+      String message = String.format("Users '%s' not found", request.getIdList());
+      throw new UsersNotFoundException(message);
+    }
+    return getUsernamesAndIds(users);
+  }
+
+  private static Map<String, String> getUsernamesAndIds(List<UserEntity> users) {
+    return users.stream().collect(Collectors.toMap(UserEntity::getId, UserEntity::getUsername));
   }
 }
