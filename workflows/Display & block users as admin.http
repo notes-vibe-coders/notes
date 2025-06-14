@@ -1,0 +1,27 @@
+### Get all users as admin
+GET localhost:8080/api/v1/user
+Authorization: Basic admin admin
+Content-Type: application/json
+
+{
+  "idList": []
+}
+
+### Can't access as workflow user
+GET localhost:8080/api/v1/user
+Authorization: Basic workflow-user workflow-user
+Content-Type: application/json
+
+{
+  "idList": []
+}
+
+### Block a user
+PUT localhost:8080/api/v1/user/block
+Authorization: Basic admin admin
+Content-Type: application/json
+
+{
+  "userId": "",
+  "block": true
+}

@@ -76,7 +76,10 @@ public class UserService {
   }
 
   public Map<String, String> viewUsers(ViewUsersRequest request) {
-    List<UserEntity> users = userRepository.findAllById(request.getIdList());
+    List<UserEntity> users =
+        request.getIdList().isEmpty()
+            ? userRepository.findAll()
+            : userRepository.findAllById(request.getIdList());
     if (users.isEmpty()) {
       String message = String.format("Users '%s' not found", request.getIdList());
       throw new UsersNotFoundException(message);
