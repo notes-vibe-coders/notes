@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -83,6 +85,8 @@ public class NoteService {
 
     if (important) {
       notes = notes.stream().filter(Note::isImportant).toList();
+    } else {
+      notes = notes.stream().filter(note -> !note.isImportant()).toList();
     }
 
     Map<Note, NoteSnapshot> noteSnapshotMap = new HashMap<>();
@@ -117,7 +121,7 @@ public class NoteService {
   public List<Note> getNotes(@NonNull List<String> noteIds) {
     return noteRepository.findAllById(noteIds).stream()
         .filter(note -> accessControlService.userHasAccessTo(note, Action.READ))
-        .toList();
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 
   private Note getNoteWithAccessControl(String id, Action action) {
